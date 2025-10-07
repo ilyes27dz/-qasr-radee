@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// المنتجات
+model Product {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  nameAr          String
+  description     String?
+  descriptionAr   String
+  price           Float
+  salePrice       Float?
+  stock           Int
+  images          String[]
+  category        String
+  categoryId      String
+  ageGroup        String?
+  gender          String?
+  rating          Float    @default(0)
+  sales           Int      @default(0)
+  featured        Boolean  @default(false)
+  badge           String?
+  enabled         Boolean  @default(true)
+  specifications  String?  // ← حقل جديد للتفاصيل الإضافية
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  reviews         Review[]
+  orderItems      OrderItem[]
+  wishlistItems   WishlistItem[]
+}
+
+// الطلبات
+model Order {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  orderNumber   String      @unique
+  
+  customerId    String?     @db.ObjectId
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  
+  wilaya        String
+  commune       String
+  address       String
+  notes         String?
+  
+  status        String      @default("pending")
+  paymentMethod String      @default("cash_on_delivery")
+  priority      String      @default("medium")
+  
+  subtotal      Float
+  shippingCost  Float
+  discount      Float       @default(0)
+  pointsUsed    Int         @default(0)
+  total         Float
+  
+  items         OrderItem[]
+  customer      Customer?   @relation(fields: [customerId], references: [id])
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+// عناصر الطلب
+model OrderItem {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  orderId     String  @db.ObjectId
+  productId   String  @db.ObjectId
+  productName String
+  quantity    Int
+  price       Float
+  
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product @relation(fields: [productId], references: [id])
+}
+
+// المستخدمين (Admin & Employees)
+model User {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String    @unique
+  phone       String?
+  password    String
+  role        String    @default("employee")
+  
+  permissions String[]  @default([])
+  isActive    Boolean   @default(true)
+  lastLogin   DateTime?
+  
+  department  String?
+  employeeId  String?
+  hiredDate   DateTime?
+  salary      Float?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// الزبائن
+model Customer {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String    @unique
+  phone     String
+  password  String
+  role      String    @default("customer")
+  
+  points    Int       @default(0)
+  totalSpent Float    @default(0)
+  
+  isActive  Boolean   @default(true)
+  birthday  DateTime?
+  
+  reviews   Review[]
+  orders    Order[]
+  addresses Address[]
+  wishlist  WishlistItem[]
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// العناوين المحفوظة
+model Address {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String   @db.ObjectId
+  
+  label      String
+  wilaya     String
+  commune    String
+  address    String
+  phone      String?
+  isDefault  Boolean  @default(false)
+  
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// المفضلة
+model WishlistItem {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String   @db.ObjectId
+  productId  String   @db.ObjectId
+  
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime @default(now())
+}
+
+// التقييمات
+model Review {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  productId  String    @db.ObjectId
+  customerId String    @db.ObjectId
+  rating     Int
+  comment    String?
+  
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer   Customer  @relation(fields: [customerId], references: [id])
+  
+  createdAt  DateTime  @default(now())
+}
+
+// الشعارات
+model Banner {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  text      String
+  color     String
+  enabled   Boolean  @default(true)
+  order     Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// رسائل "اتصل بنا"
+model ContactMessage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  phone     String
+  subject   String
+  message   String
+  status    String   @default("unread")
+  
+  createdAt DateTime @default(now())
+}
+
+// كوبونات الخصم
+model Coupon {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  code        String   @unique
+  discount    Float
+  discountType String
+  minAmount   Float?
+  maxUses     Int?
+  usedCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
