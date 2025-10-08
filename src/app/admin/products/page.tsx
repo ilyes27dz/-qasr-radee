@@ -10,6 +10,7 @@ import {
   Upload, Image as ImageIcon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { uploadMultipleToCloudinary } from '@/lib/cloudinary';
 
 const categories = [
   { id: 'all', name: 'الكل', icon: '🛍️' },
@@ -107,38 +108,30 @@ export default function ProductsManagementPage() {
     fetchProducts();
   }, [selectedCategory, searchQuery]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
 
-    setUploading(true);
+  setUploading(true);
 
-    try {
-      const formData = new FormData();
-      Array.from(files).forEach(file => {
-        formData.append('images', file);
-      });
+  try {
+    const filesArray = Array.from(files);
+    
+    // رفع على Cloudinary ✅
+    const cloudinaryUrls = await uploadMultipleToCloudinary(filesArray);
+    
+    console.log('✅ تم رفع الصور على Cloudinary:', cloudinaryUrls);
+    
+    setUploadedImages([...uploadedImages, ...cloudinaryUrls]);
+    toast.success(`تم رفع ${cloudinaryUrls.length} صورة على Cloudinary ✅`);
+  } catch (error) {
+    console.error('❌ خطأ في رفع الصور:', error);
+    toast.error('فشل رفع الصور على Cloudinary');
+  } finally {
+    setUploading(false);
+  }
+};
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setUploadedImages([...uploadedImages, ...data.images]);
-        toast.success(`تم رفع ${data.images.length} صورة ✅`);
-      } else {
-        toast.error('فشل رفع الصور');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('حدث خطأ أثناء رفع الصور');
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const removeImage = (index: number) => {
     setUploadedImages(uploadedImages.filter((_, i) => i !== index));
