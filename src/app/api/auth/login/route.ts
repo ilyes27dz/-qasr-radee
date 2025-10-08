@@ -4,34 +4,45 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const { email, password } = body;
 
     console.log('🔐 محاولة تسجيل دخول:', email);
 
+    // تحقق من البيانات
     if (!email || !password) {
+      console.log('❌ بيانات ناقصة');
       return NextResponse.json(
-        { error: 'البريد وكلمة المرور مطلوبان' },
+        { error: 'البريد الإلكتروني وكلمة المرور مطلوبان' },
         { status: 400 }
       );
     }
 
+    // تنظيف البريد الإلكتروني
+    const cleanEmail = email.toLowerCase().trim();
+    console.log('📧 البريد بعد التنظيف:', cleanEmail);
+
     // البحث عن المستخدم
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() }, // ✅ تنظيف البريد
+      where: { email: cleanEmail },
     });
 
     if (!user) {
-      console.log('❌ المستخدم غير موجود');
+      console.log('❌ المستخدم غير موجود:', cleanEmail);
       return NextResponse.json(
         { error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' },
         { status: 401 }
       );
     }
 
-    // التحقق من كلمة المرور
-    const isValid = await bcrypt.compare(password, user.password);
+    console.log('👤 المستخدم موجود:', user.email, '- الدور:', user.role);
 
-    if (!isValid) {
+    // التحقق من كلمة المرور
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    console.log('🔑 كلمة المرور صحيحة؟', isPasswordValid);
+
+    if (!isPasswordValid) {
       console.log('❌ كلمة المرور خاطئة');
       return NextResponse.json(
         { error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' },
@@ -39,8 +50,9 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('✅ تسجيل دخول ناجح');
+    console.log('✅ تسجيل دخول ناجح!');
 
+    // إرجاع بيانات المستخدم
     return NextResponse.json({
       success: true,
       user: {
@@ -51,7 +63,7 @@ export async function POST(request: Request) {
         permissions: user.permissions || [],
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ خطأ في تسجيل الدخول:', error);
     return NextResponse.json(
       { error: 'حدث خطأ في الخادم' },
