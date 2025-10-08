@@ -289,10 +289,17 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   };
 
   const getProductImage = (images: string[]) => {
-    if (!images || images.length === 0) return null;
-    const validImage = images.find(img => img && img !== 'placeholder.jpg' && img.startsWith('/uploads/'));
-    return validImage || null;
-  };
+  if (!images || images.length === 0) return null;
+  
+  const validImage = images.find(img => {
+    if (!img || img === 'placeholder.jpg') return false;
+    return img.startsWith('/uploads/') || 
+           img.startsWith('https://res.cloudinary.com/') ||
+           img.startsWith('http');
+  });
+  
+  return validImage || null;
+};
 
   return (
     <div className="min-h-screen bg-gray-50 font-arabic">
