@@ -36,34 +36,41 @@ export default function OrdersPage() {
   }, [orderNumberFromUrl]);
 
   const fetchOrder = async (orderNum: string) => {
-    setLoading(true);
-    setNotFound(false);
-    setOrder(null);
+  setLoading(true);
+  setNotFound(false);
+  setOrder(null);
+  
+  try {
+    // ✅ جلب من MongoDB بدلاً من localStorage
+    const response = await fetch('/api/orders');
     
-    try {
-      // جلب من localStorage
-      const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      console.log('📦 Searching in orders:', savedOrders.length);
-      
-      const foundOrder = savedOrders.find((o: any) => o.orderNumber === orderNum);
-      
-      if (foundOrder) {
-        setOrder(foundOrder);
-        console.log('✅ Order found:', foundOrder);
-        toast.success('تم العثور على الطلب! ✅');
-      } else {
-        setNotFound(true);
-        console.log('❌ Order not found:', orderNum);
-        toast.error('لم يتم العثور على الطلب');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setNotFound(true);
-      toast.error('حدث خطأ في البحث');
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error('فشل جلب الطلبات');
     }
-  };
+    
+    const orders = await response.json();
+    console.log('📦 تم جلب الطلبات من MongoDB:', orders.length);
+    
+    const foundOrder = orders.find((o: any) => o.orderNumber === orderNum);
+    
+    if (foundOrder) {
+      setOrder(foundOrder);
+      console.log('✅ تم العثور على الطلب:', foundOrder);
+      toast.success('تم العثور على الطلب! ✅');
+    } else {
+      setNotFound(true);
+      console.log('❌ الطلب غير موجود:', orderNum);
+      toast.error('لم يتم العثور على الطلب');
+    }
+  } catch (error: any) {
+    console.error('❌ خطأ:', error);
+    setNotFound(true);
+    toast.error('حدث خطأ في البحث');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

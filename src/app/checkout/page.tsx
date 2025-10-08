@@ -45,81 +45,67 @@ export default function CheckoutPage() {
   const cartTotal = getCartTotal();
   const total = cartTotal + shippingCost;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    if (!formData.fullName || !formData.phone || !formData.wilaya || !formData.commune || !formData.address) {
-      toast.error('يرجى ملء جميع الحقول المطلوبة');
-      setLoading(false);
-      return;
-    }
+  if (!formData.fullName || !formData.phone || !formData.wilaya || !formData.commune || !formData.address) {
+    toast.error('يرجى ملء جميع الحقول المطلوبة');
+    setLoading(false);
+    return;
+  }
 
-    try {
-      // توليد رقم الطلب
-      const orderNumber = generateOrderNumber();
-      
-      // إنشاء الطلب
-      const newOrder = {
-        id: Date.now().toString(),
-        orderNumber: orderNumber,
-        customerId: user?.id || '',
+  try {
+    // ✅ إرسال الطلب للـ API
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         customerName: formData.fullName,
         customerEmail: user?.email || formData.email || '',
         customerPhone: formData.phone,
         address: formData.address,
         wilaya: formData.wilaya,
         commune: formData.commune,
+        notes: formData.notes,
+        paymentMethod: formData.paymentMethod,
+        subtotal: cartTotal,
+        shippingCost: shippingCost,
+        total: total,
         items: cartItems.map(item => ({
           productId: item.product.id,
           productName: item.product.nameAr,
           quantity: item.quantity,
           price: item.product.salePrice || item.product.price,
         })),
-        subtotal: cartTotal,
-        shipping: shippingCost,
-        total: total,
-        paymentMethod: formData.paymentMethod === 'cash_on_delivery' ? 'cash' : 'card',
-        notes: formData.notes,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      };
+      }),
+    });
 
-      console.log('💾 Creating order:', newOrder);
+    const data = await response.json();
 
-      // حفظ في localStorage
-      try {
-        const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        const updatedOrders = [...existingOrders, newOrder];
-        localStorage.setItem('orders', JSON.stringify(updatedOrders));
-        
-        console.log('✅ Order saved successfully!');
-        console.log('📦 Total orders:', updatedOrders.length);
-        console.log('🆕 New order:', newOrder.orderNumber);
-      } catch (storageError) {
-        console.error('❌ Error saving to localStorage:', storageError);
-      }
-
-      // محاكاة الإرسال
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // مسح السلة
-      clearCart();
-
-      // رسالة النجاح
-      toast.success('تم إرسال طلبك بنجاح! سنتصل بك قريباً ✅', {
-        duration: 5000,
-      });
-
-      // التوجيه لصفحة الطلب
-      router.push(`/orders?number=${orderNumber}`);
-    } catch (error) {
-      console.error('❌ Order error:', error);
-      toast.error('حدث خطأ، يرجى المحاولة مرة أخرى');
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error(data.error || 'فشل إنشاء الطلب');
     }
-  };
+
+    console.log('✅ تم حفظ الطلب في MongoDB:', data.order.orderNumber);
+
+    // مسح السلة
+    clearCart();
+
+    // رسالة النجاح
+    toast.success('تم إرسال طلبك بنجاح! سنتصل بك قريباً ✅', {
+      duration: 5000,
+    });
+
+    // التوجيه لصفحة الطلب
+    router.push(`/orders?number=${data.order.orderNumber}`);
+  } catch (error: any) {
+    console.error('❌ Order error:', error);
+    toast.error(error.message || 'حدث خطأ، يرجى المحاولة مرة أخرى');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({
