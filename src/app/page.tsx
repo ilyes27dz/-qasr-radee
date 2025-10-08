@@ -116,30 +116,33 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="order-2 md:order-1">
-              <Logo size="small" variant="text" />
-            </Link>
+  {/* الشعار على اليمين ✅ */}
+  <Link href="/" className="order-1">
+    <Logo size="small" variant="text" />
+  </Link>
 
-            <div className="flex items-center gap-3 order-1 md:order-2">
-              <UserMenu />
-              <button onClick={() => window.location.href = '/wishlist'} className="relative p-2 hover:bg-gray-100 rounded-lg transition">
-                <Heart className="w-5 h-5 text-gray-600" />
-                {getWishlistCount() > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-bold">
-                    {getWishlistCount()}
-                  </span>
-                )}
-              </button>
-              <Link href="/cart" className="relative p-2 hover:bg-gray-100 rounded-lg transition">
-                <ShoppingCart className="w-5 h-5 text-gray-600" />
-                {getCartCount() > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-bold">
-                    {getCartCount()}
-                  </span>
-                )}
-              </Link>
-            </div>
-          </div>
+  {/* الأيقونات على اليسار ✅ */}
+  <div className="flex items-center gap-3 order-2">
+    <UserMenu />
+    <button onClick={() => window.location.href = '/wishlist'} className="relative p-2 hover:bg-gray-100 rounded-lg transition">
+      <Heart className="w-5 h-5 text-gray-600" />
+      {getWishlistCount() > 0 && (
+        <span className="absolute -top-1 -left-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-bold">
+          {getWishlistCount()}
+        </span>
+      )}
+    </button>
+    <Link href="/cart" className="relative p-2 hover:bg-gray-100 rounded-lg transition">
+      <ShoppingCart className="w-5 h-5 text-gray-600" />
+      {getCartCount() > 0 && (
+        <span className="absolute -top-1 -left-1 bg-blue-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-bold">
+          {getCartCount()}
+        </span>
+      )}
+    </Link>
+  </div>
+</div>
+
 
           <div className="mt-4 relative">
             <form onSubmit={handleSearch}>
