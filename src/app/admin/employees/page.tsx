@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   UserCog, Users, Plus, Edit, Trash2, Search, RefreshCw,
-  LogOut, Home, Shield, Check, X, Mail, Phone
+  LogOut, Home, Shield, Check, Mail, Phone
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -17,7 +17,7 @@ interface Employee {
   role: 'admin' | 'employee';
   department: string;
   permissions: string[];
-  active: boolean;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -52,13 +52,12 @@ export default function EmployeesPage() {
     role: 'employee' as 'admin' | 'employee',
     department: '',
     permissions: [] as string[],
-    active: true,
   });
 
   useEffect(() => {
     const adminUser = localStorage.getItem('admin_user');
     if (!adminUser) {
-      router.push('/admin/login');
+      router.push('/staff/login');
       return;
     }
 
@@ -72,17 +71,23 @@ export default function EmployeesPage() {
     fetchEmployees();
   }, []);
 
+  // ✅ جلب من MongoDB
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      // هنا سنجلب من localStorage مؤقتاً
-      const storedEmployees = localStorage.getItem('employees');
-      if (storedEmployees) {
-        setEmployees(JSON.parse(storedEmployees));
+      const response = await fetch('/api/admin/employees');
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        setEmployees(data);
+        console.log('✅ تم جلب الموظفين:', data.length);
+      } else {
+        setEmployees([]);
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching employees:', error);
       toast.error('فشل تحميل البيانات');
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
@@ -91,47 +96,48 @@ export default function EmployeesPage() {
   const handleLogout = () => {
     localStorage.removeItem('admin_user');
     toast.success('تم تسجيل الخروج');
-    router.push('/admin/login');
+    router.push('/staff/login');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ✅ حفظ في MongoDB
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    if (editingEmployee) {
-      // تحديث موظف
-      const updated = employees.map(emp =>
-        emp.id === editingEmployee.id
-          ? { ...emp, ...formData, id: emp.id, createdAt: emp.createdAt }
-          : emp
-      );
-      setEmployees(updated);
-      localStorage.setItem('employees', JSON.stringify(updated));
-      toast.success('تم تحديث الموظف بنجاح ✅');
-    } else {
-      // إضافة موظف جديد
-      const newEmployee: Employee = {
-        id: Date.now().toString(),
-        ...formData,
-        createdAt: new Date().toISOString(),
-      };
-      const updated = [...employees, newEmployee];
-      setEmployees(updated);
-      localStorage.setItem('employees', JSON.stringify(updated));
-      toast.success('تمت إضافة الموظف بنجاح ✅');
+    try {
+      const url = editingEmployee 
+        ? `/api/admin/employees/${editingEmployee.id}`
+        : '/api/admin/employees';
+      
+      const method = editingEmployee ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || 'فشل الحفظ');
+        setLoading(false);
+        return;
+      }
+
+      toast.success(editingEmployee ? 'تم التحديث بنجاح ✅' : 'تمت الإضافة بنجاح ✅');
+      console.log('✅ تم حفظ الموظف:', data);
+
+      setShowModal(false);
+      setEditingEmployee(null);
+      resetForm();
+      fetchEmployees();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('حدث خطأ');
+    } finally {
+      setLoading(false);
     }
-
-    setShowModal(false);
-    setEditingEmployee(null);
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      password: '',
-      role: 'employee',
-      department: '',
-      permissions: [],
-      active: true,
-    });
   };
 
   const handleEdit = (employee: Employee) => {
@@ -144,17 +150,28 @@ export default function EmployeesPage() {
       role: employee.role,
       department: employee.department,
       permissions: employee.permissions,
-      active: employee.active,
     });
     setShowModal(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
-      const updated = employees.filter(emp => emp.id !== id);
-      setEmployees(updated);
-      localStorage.setItem('employees', JSON.stringify(updated));
-      toast.success('تم حذف الموظف');
+  // ✅ حذف من MongoDB
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`هل أنت متأكد من حذف "${name}"؟`)) return;
+
+    try {
+      const response = await fetch(`/api/admin/employees/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast.success('تم حذف الموظف ✅');
+        fetchEmployees();
+      } else {
+        toast.error('فشل الحذف');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('حدث خطأ');
     }
   };
 
@@ -167,10 +184,22 @@ export default function EmployeesPage() {
     }));
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      role: 'employee',
+      department: '',
+      permissions: [],
+    });
+  };
+
   const filteredEmployees = employees.filter(emp =>
     emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.department.toLowerCase().includes(searchQuery.toLowerCase())
+    emp.department?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -191,16 +220,7 @@ export default function EmployeesPage() {
               <button
                 onClick={() => {
                   setEditingEmployee(null);
-                  setFormData({
-                    name: '',
-                    email: '',
-                    phone: '',
-                    password: '',
-                    role: 'employee',
-                    department: '',
-                    permissions: [],
-                    active: true,
-                  });
+                  resetForm();
                   setShowModal(true);
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
@@ -209,10 +229,7 @@ export default function EmployeesPage() {
                 إضافة موظف
               </button>
 
-              <button
-                onClick={fetchEmployees}
-                className="p-2 hover:bg-gray-50 rounded-lg transition"
-              >
+              <button onClick={fetchEmployees} className="p-2 hover:bg-gray-50 rounded-lg transition">
                 <RefreshCw className="w-5 h-5 text-gray-600" />
               </button>
 
@@ -220,10 +237,7 @@ export default function EmployeesPage() {
                 <Home className="w-5 h-5 text-gray-600" />
               </Link>
 
-              <button
-                onClick={handleLogout}
-                className="p-2 hover:bg-red-50 rounded-lg"
-              >
+              <button onClick={handleLogout} className="p-2 hover:bg-red-50 rounded-lg">
                 <LogOut className="w-5 h-5 text-red-600" />
               </button>
             </div>
@@ -247,78 +261,85 @@ export default function EmployeesPage() {
         </div>
 
         {/* Employees Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEmployees.map((employee) => (
-            <div key={employee.id} className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                    {employee.name.charAt(0)}
+        {loading ? (
+          <div className="text-center py-20">
+            <RefreshCw className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">جاري التحميل...</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEmployees.map((employee) => (
+              <div key={employee.id} className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                      {employee.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">{employee.name}</h3>
+                      <p className="text-sm text-gray-500">{employee.department}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">{employee.name}</h3>
-                    <p className="text-sm text-gray-500">{employee.department}</p>
-                  </div>
-                </div>
-                {employee.role === 'admin' && (
-                  <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-lg flex items-center gap-1">
-                    <Shield className="w-3 h-3" />
-                    مدير
-                  </span>
-                )}
-              </div>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Mail className="w-4 h-4" />
-                  {employee.email}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Phone className="w-4 h-4" />
-                  {employee.phone}
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-xs text-gray-500 mb-2">الصلاحيات:</p>
-                <div className="flex flex-wrap gap-2">
-                  {employee.permissions.length > 0 ? (
-                    employee.permissions.map(perm => (
-                      <span key={perm} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded">
-                        {availablePermissions.find(p => p.id === perm)?.label}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-gray-400">لا توجد صلاحيات</span>
+                  {employee.role === 'admin' && (
+                    <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-lg flex items-center gap-1">
+                      <Shield className="w-3 h-3" />
+                      مدير
+                    </span>
                   )}
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleEdit(employee)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition font-semibold text-sm"
-                >
-                  <Edit className="w-4 h-4" />
-                  تعديل
-                </button>
-                <button
-                  onClick={() => handleDelete(employee.id)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-semibold text-sm"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  حذف
-                </button>
-              </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Mail className="w-4 h-4" />
+                    {employee.email}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Phone className="w-4 h-4" />
+                    {employee.phone}
+                  </div>
+                </div>
 
-              <div className="mt-3 pt-3 border-t text-xs text-gray-500">
-                انضم في {new Date(employee.createdAt).toLocaleDateString('ar-DZ')}
-              </div>
-            </div>
-          ))}
-        </div>
+                <div className="mb-4">
+                  <p className="text-xs text-gray-500 mb-2">الصلاحيات:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {employee.permissions?.length > 0 ? (
+                      employee.permissions.map(perm => (
+                        <span key={perm} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded">
+                          {availablePermissions.find(p => p.id === perm)?.label}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-gray-400">لا توجد صلاحيات</span>
+                    )}
+                  </div>
+                </div>
 
-        {filteredEmployees.length === 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEdit(employee)}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition font-semibold text-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                    تعديل
+                  </button>
+                  <button
+                    onClick={() => handleDelete(employee.id, employee.name)}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-semibold text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    حذف
+                  </button>
+                </div>
+
+                <div className="mt-3 pt-3 border-t text-xs text-gray-500">
+                  انضم في {new Date(employee.createdAt).toLocaleDateString('ar-DZ')}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {filteredEmployees.length === 0 && !loading && (
           <div className="text-center py-20">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-xl text-gray-500 font-bold">لا توجد نتائج</p>
@@ -326,10 +347,10 @@ export default function EmployeesPage() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* Modal - نفس الكود السابق */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full my-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               {editingEmployee ? 'تعديل موظف' : 'إضافة موظف جديد'}
             </h2>
@@ -457,9 +478,10 @@ export default function EmployeesPage() {
               <div className="flex items-center gap-3 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition"
+                  disabled={loading}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition disabled:opacity-50"
                 >
-                  {editingEmployee ? 'حفظ التغييرات' : 'إضافة الموظف'}
+                  {loading ? 'جاري الحفظ...' : (editingEmployee ? 'حفظ التغييرات' : 'إضافة الموظف')}
                 </button>
                 <button
                   type="button"
