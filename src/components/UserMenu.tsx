@@ -31,6 +31,7 @@ export default function UserMenu() {
     if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
       localStorage.removeItem('customer_user');
       toast.success('تم تسجيل الخروج');
+      setIsOpen(false);
       window.location.href = '/';
     }
   };
@@ -49,7 +50,7 @@ export default function UserMenu() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition"
       >
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
           {user.name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <span className="hidden md:block text-sm font-semibold text-gray-700">
@@ -59,17 +60,24 @@ export default function UserMenu() {
       
       {isOpen && (
         <>
-          {/* خلفية شفافة للإغلاق - z-index أعلى ✅ */}
+          {/* خلفية شفافة للإغلاق ✅ */}
           <div 
-            className="fixed inset-0 z-[90]" 
+            className="fixed inset-0 z-[9998]" 
             onClick={() => setIsOpen(false)}
           />
           
-          {/* القائمة - z-index أعلى ✅ */}
-          <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 z-[100] overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gradient-to-br from-blue-50 to-purple-50">
-              <p className="font-bold text-gray-900 truncate">{user.name}</p>
-              <p className="text-xs text-gray-500 truncate">{user.email}</p>
+          {/* القائمة - موضعها صحيح ✅ */}
+          <div 
+            className="fixed md:absolute right-0 md:right-auto md:left-0 top-16 md:top-full mt-0 md:mt-2 w-64 md:w-56 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-y-auto"
+            style={{ 
+              position: 'fixed',
+              right: '1rem',
+              top: '4rem'
+            }}
+          >
+            <div className="p-4 border-b border-gray-100 bg-gradient-to-br from-blue-50 to-purple-50 sticky top-0 z-10">
+              <p className="font-bold text-gray-900 truncate text-base">{user.name}</p>
+              <p className="text-xs text-gray-500 truncate mt-1">{user.email}</p>
             </div>
             
             <div className="p-2">
@@ -78,7 +86,7 @@ export default function UserMenu() {
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 rounded-lg transition text-gray-700 hover:text-blue-600"
               >
-                <User className="w-5 h-5" />
+                <User className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm font-semibold">حسابي</span>
               </Link>
               
@@ -87,7 +95,7 @@ export default function UserMenu() {
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 rounded-lg transition text-gray-700 hover:text-blue-600"
               >
-                <Package className="w-5 h-5" />
+                <Package className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm font-semibold">طلباتي</span>
               </Link>
               
@@ -96,7 +104,7 @@ export default function UserMenu() {
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 rounded-lg transition text-gray-700 hover:text-blue-600"
               >
-                <Heart className="w-5 h-5" />
+                <Heart className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm font-semibold">المفضلة</span>
               </Link>
               
@@ -105,7 +113,7 @@ export default function UserMenu() {
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 rounded-lg transition text-gray-700 hover:text-blue-600"
               >
-                <Settings className="w-5 h-5" />
+                <Settings className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm font-semibold">الإعدادات</span>
               </Link>
               
@@ -115,7 +123,7 @@ export default function UserMenu() {
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 hover:text-red-700 rounded-lg transition font-semibold"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm">تسجيل الخروج</span>
               </button>
             </div>
