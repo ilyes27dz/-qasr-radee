@@ -103,31 +103,33 @@ export default function ProductsPage() {
     return icons[categoryId] || '📦';
   };
 
-const getProductImage = (images: string[] | undefined) => {
-  if (!images || images.length === 0) return null;
-  
-  const validImage = images.find(img => {
-    if (!img || img === 'placeholder.jpg') return false;
-    return img.startsWith('/uploads/') || 
-           img.startsWith('https://res.cloudinary.com/') ||
-           img.startsWith('http');
-  });
-  
-  return validImage || null;
-};
+  // ✅ دالة مصححة - تقبل صور Cloudinary
+  const getProductImage = (images: string[] | undefined) => {
+    if (!images || images.length === 0) return null;
+    
+    const validImage = images.find(img => {
+      if (!img || img === 'placeholder.jpg') return false;
+      return img.startsWith('/uploads/') || 
+             img.startsWith('https://res.cloudinary.com/') ||
+             img.startsWith('http');
+    });
+    
+    return validImage || null;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-arabic">
-      {/* Header */}
+      {/* Header - مصحح ✅ */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="order-2 md:order-1">
-  <Logo size="small" variant="text" />
-</Link>
+            {/* الشعار على اليمين ✅ */}
+            <Link href="/">
+              <Logo size="small" variant="text" />
+            </Link>
 
-
-            <div className="flex items-center gap-4 order-1 md:order-2">
+            {/* الأيقونات على اليسار ✅ */}
+            <div className="flex items-center gap-4">
               <UserMenu />
               <Link href="/wishlist" className="relative hover:scale-110 transition">
                 <Heart className="w-6 h-6 text-gray-600 hover:text-red-500 transition" />

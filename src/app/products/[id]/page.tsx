@@ -69,11 +69,19 @@ export default function ProductDetailPage() {
     }
   };
 
-  const getProductImage = (images: string[]) => {
-    if (!images || images.length === 0) return null;
-    const validImage = images.find(img => img && img !== 'placeholder.jpg' && img.startsWith('/uploads/'));
-    return validImage || null;
-  };
+const getProductImage = (images: string[] | undefined) => {
+  if (!images || images.length === 0) return null;
+  
+  const validImage = images.find(img => {
+    if (!img || img === 'placeholder.jpg') return false;
+    return img.startsWith('/uploads/') || 
+           img.startsWith('https://res.cloudinary.com/') ||
+           img.startsWith('http');
+  });
+  
+  return validImage || null;
+};
+
 
   const getProductIcon = (categoryId: string) => {
     const icons: any = {
