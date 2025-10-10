@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost', 'i.pinimg.com', 'images.unsplash.com'],
+    domains: ['localhost', 'i.pinimg.com', 'images.unsplash.com', 'res.cloudinary.com'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -23,7 +23,6 @@ const nextConfig = {
       },
     ];
   },
-  // ✅ تجاهل أخطاء TypeScript الصغيرة في Production
   typescript: {
     ignoreBuildErrors: false,
   },
