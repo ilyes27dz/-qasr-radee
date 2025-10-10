@@ -4,9 +4,10 @@
   "description": "قصر الرضيع - متجر إلكتروني احترافي لملابس وأدوات الأطفال والرضع",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed": "tsx scripts/seed.ts"
