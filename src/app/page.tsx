@@ -13,6 +13,8 @@ import CustomerReviews from '@/components/CustomerReviews';
 import UserMenu from '@/components/UserMenu';
 import Footer from '@/components/Footer';
 import toast from 'react-hot-toast';
+import ProductReviewsList from '@/components/ProductReviewsList';
+
 
 export default function HomePage() {
   const { addToCart, getCartCount } = useCart();
@@ -90,10 +92,9 @@ export default function HomePage() {
     }
   };
 
-const getProductImage = (images: string[] | undefined) => {
+const getProductImage = (images: string[]) => {
   if (!images || images.length === 0) return null;
   
-  // قبول صور Cloudinary أو صور محلية ✅
   const validImage = images.find(img => {
     if (!img || img === 'placeholder.jpg') return false;
     return img.startsWith('/uploads/') || 

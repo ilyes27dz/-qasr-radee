@@ -9,7 +9,10 @@ import { useWishlist } from '@/components/WishlistContext';
 import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 import Footer from '@/components/Footer';
+import ProductReviewsList from '@/components/ProductReviewsList';
+
 import toast from 'react-hot-toast';
+
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -421,6 +424,99 @@ const getProductImage = (images: string[] | undefined) => {
         </div>
       </section>
 
+      {/* Review Form Section */}
+            {/* Product Reviews Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+              ⭐ تقييمات هذا المنتج
+            </h2>
+
+            <ProductReviewsList productName={product.nameAr} />
+          </div>
+        </div>
+      </section>
+
+      {/* Review Form Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl p-8 border-2 border-gray-200 shadow-lg">
+              <h3 className="text-3xl font-bold text-gray-900 mb-6 text-center">
+                ⭐ شاركنا رأيك في هذا المنتج
+              </h3>
+              
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const name = formData.get('name') as string;
+                  const rating = formData.get('rating') as string;
+                  const comment = formData.get('comment') as string;
+                  
+                  fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                      customerName: name,
+                      rating: parseInt(rating),
+                      comment: comment,
+                      productName: product.nameAr,
+                    })
+                  }).then(r => r.json()).then(() => {
+                    toast.success('شكراً! تقييمك قيد المراجعة وسيظهر قريباً ✅');
+                    (e.target as HTMLFormElement).reset();
+                  }).catch(() => toast.error('حدث خطأ'));
+                }}
+                className="space-y-6"
+              >
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">اسمك</label>
+                  <input
+                    type="text"
+                    name="name"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                    placeholder="أدخل اسمك"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">التقييم</label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <label key={star} className="cursor-pointer">
+                        <input type="radio" name="rating" value={star} className="sr-only peer" required />
+                        <Star className="w-10 h-10 text-gray-300 peer-checked:text-yellow-400 peer-checked:fill-yellow-400 hover:scale-110 transition" />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">تعليقك</label>
+                  <textarea
+                    name="comment"
+                    rows={5}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition resize-none"
+                    placeholder="أخبرنا عن تجربتك مع المنتج..."
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg hover:shadow-xl"
+                >
+                  إرسال التقييم ⭐
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
 
       <style jsx global>{`
@@ -430,3 +526,4 @@ const getProductImage = (images: string[] | undefined) => {
     </div>
   );
 }
+

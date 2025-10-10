@@ -211,3 +211,15 @@ model Coupon {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+// نموذج التقييمات والمراجعات
+model CustomerReview {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerName String
+  rating      Int      // من 1 إلى 5
+  comment     String
+  productName String?
+  image       String?  // صورة العميل (اختياري)
+  isApproved  Boolean  @default(false) // يحتاج موافقة Admin
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

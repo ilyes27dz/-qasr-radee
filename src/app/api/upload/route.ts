@@ -6,7 +6,15 @@ import path from 'path';
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const files = formData.getAll('images') as File[];
+    
+    // دعم صور المنتجات (متعددة) ✅
+    const productImages = formData.getAll('images') as File[];
+    
+    // دعم صور التقييمات (ملف واحد) ✅
+    const reviewImage = formData.get('file') as File;
+    
+    // تحديد المصدر
+    const files = productImages.length > 0 ? productImages : (reviewImage ? [reviewImage] : []);
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: 'No files uploaded' }, { status: 400 });
@@ -31,6 +39,15 @@ export async function POST(request: NextRequest) {
       uploadedFiles.push(`/uploads/${filename}`);
     }
 
+    // إذا صورة تقييم واحدة → url ✅
+    if (reviewImage && productImages.length === 0) {
+      return NextResponse.json({ 
+        success: true, 
+        url: uploadedFiles[0] 
+      });
+    }
+
+    // إذا صور منتجات → images ✅
     return NextResponse.json({ 
       success: true, 
       images: uploadedFiles 

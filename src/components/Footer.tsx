@@ -17,7 +17,7 @@ export default function Footer() {
               متجركم الموثوق لملابس وأدوات الأطفال والرضع في الجزائر. جودة عالية وأسعار منافسة.
             </p>
             <div className="flex gap-3">
-              <a href="https://facebook.com/qsrradi3" target="_blank" rel="noopener noreferrer" 
+              <a href="https://web.facebook.com/profile.php?id=100087800495088&_rdc=1&_rdr#" target="_blank" rel="noopener noreferrer" 
                  className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition">
                 <Facebook className="w-5 h-5" />
               </a>
@@ -60,7 +60,7 @@ export default function Footer() {
                 <div>
                   <p className="font-semibold text-white">الهاتف</p>
                   <a href="tel:+213555000000" className="hover:text-white transition">
-                    0555 00 00 00
+                    0558864755
                   </a>
                 </div>
               </li>
@@ -77,7 +77,7 @@ export default function Footer() {
                 <MapPin className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-white">العنوان</p>
-                  <p>الجزائر العاصمة، الجزائر</p>
+                  <p>سيدي علي - مستغانم-الجزائر</p>
                 </div>
               </li>
             </ul>

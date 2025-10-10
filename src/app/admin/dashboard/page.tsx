@@ -7,8 +7,9 @@ import {
   LayoutDashboard, Package, ShoppingCart, Users, Settings, 
   DollarSign, LogOut, Home, RefreshCw, FileText,
   BarChart3, UserCog, ArrowUpRight, Bell,
-  Moon, Sun, Download, Link2
+  Moon, Sun, Download, Link2, Star
 } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 import { getAvailablePages, getAvailableStats } from '@/lib/permissions';
 
@@ -510,8 +511,22 @@ export default function AdminDashboard() {
                   : `لديك صلاحية الوصول إلى ${availablePages.length} صفحة`}
               </p>
             </div>
+{user?.role === 'admin' && (
+  <div className="mb-6">
+    <Link href="/admin/reviews" className="block bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
+      <div className="flex items-center gap-4">
+        <Star className="w-10 h-10" />
+        <div>
+          <h3 className="text-2xl font-black">التقييمات</h3>
+          <p className="text-purple-100 text-sm">إدارة آراء العملاء</p>
+        </div>
+      </div>
+    </Link>
+  </div>
+)}
 
             {statsCards.length > 0 && (
+              
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 {statsCards.map((stat, index) => {
                   const Icon = stat.icon;
