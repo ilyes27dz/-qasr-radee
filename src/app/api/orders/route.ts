@@ -27,10 +27,35 @@ export async function POST(request: Request) {
       );
     }
 
+    // ✅ التحقق من توفر الكمية لكل منتج
+    for (const item of body.items) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId || item.id },
+      });
+
+      if (!product) {
+        return NextResponse.json(
+          { error: `المنتج ${item.productName || item.nameAr} غير موجود` },
+          { status: 400 }
+        );
+      }
+
+      if (product.stock < item.quantity) {
+        return NextResponse.json(
+          { 
+            error: `الكمية المتوفرة من "${product.nameAr}" هي ${product.stock} فقط`,
+            availableStock: product.stock,
+            productId: product.id
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // إنشاء رقم طلب فريد
     const orderNumber = `QSR-${Date.now().toString().slice(-8)}`;
 
-    // حفظ الطلب في قاعدة البيانات
+    // ✅ حفظ الطلب في قاعدة البيانات
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -60,6 +85,20 @@ export async function POST(request: Request) {
         items: true,
       },
     });
+
+    // ✅ خصم الكمية من المخزون
+    for (const item of body.items) {
+      await prisma.product.update({
+        where: { id: item.productId || item.id },
+        data: {
+          stock: {
+            decrement: item.quantity,
+          },
+        },
+      });
+
+      console.log(`✅ تم خصم ${item.quantity} من المنتج ${item.productName || item.nameAr}`);
+    }
 
     console.log('✅ تم حفظ الطلب بنجاح:', order.orderNumber);
 

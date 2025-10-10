@@ -154,41 +154,45 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-arabic">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3 group order-2 md:order-1">
-              <Logo size="small" />
-              <div>
-                <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 group-hover:from-purple-600 group-hover:to-pink-600 transition block">
-                  قصر الرضيع
-                </span>
-                <span className="text-xs text-gray-500 font-semibold">Baby Palace Store</span>
-              </div>
-            </Link>
+      {/* Header - محسّن للموبايل */}
+{/* Header - تصميم محسّن جديد */}
+{/* Header - الشعار فقط */}
+<header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg">
+  <div className="container mx-auto px-4 py-4">
+    <div className="flex items-center justify-between">
+      {/* Logo فقط */}
+      <Link href="/" className="hover:scale-110 transition">
+        <Logo size="small" />
+      </Link>
 
-            <div className="flex items-center gap-4 order-1 md:order-2">
-              <UserMenu />
-              <Link href="/wishlist" className="relative hover:scale-110 transition">
-                <Heart className="w-6 h-6 text-gray-600 hover:text-red-500 transition" />
-                {getWishlistCount() > 0 && (
-                  <span className="absolute -top-2 -left-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
-                    {getWishlistCount()}
-                  </span>
-                )}
-              </Link>
-              <Link href="/cart" className="relative hover:scale-110 transition">
-                <ShoppingCart className="w-6 h-6 text-gray-600 hover:text-blue-600 transition" />
-                {getCartCount() > 0 && (
-                  <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">
-                    {getCartCount()}
-                  </span>
-                )}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Icons */}
+      <div className="flex items-center gap-3 md:gap-4">
+        <UserMenu />
+        
+        <Link href="/wishlist" className="relative hover:scale-110 transition">
+          <Heart className="w-6 h-6 text-gray-600 hover:text-red-500 transition" />
+          {getWishlistCount() > 0 && (
+            <span className="absolute -top-2 -left-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
+              {getWishlistCount()}
+            </span>
+          )}
+        </Link>
+        
+        <Link href="/cart" className="relative hover:scale-110 transition">
+          <ShoppingCart className="w-6 h-6 text-gray-600 hover:text-blue-600 transition" />
+          {getCartCount() > 0 && (
+            <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">
+              {getCartCount()}
+            </span>
+          )}
+        </Link>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+
 
       {/* Page Header */}
       <section className="py-20 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 relative overflow-hidden">
@@ -425,25 +429,33 @@ const handleSubmit = async (e: React.FormEvent) => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <Logo size="small" />
-            <span className="text-3xl font-black">قصر الرضيع</span>
-          </div>
-          <p className="text-gray-400 mb-8 text-lg">
-            متجركم الموثوق لملابس وأدوات الأطفال والرضع
-          </p>
-          <div className="flex gap-8 justify-center text-sm text-gray-400 font-semibold">
-            <Link href="/about" className="hover:text-white transition hover:scale-110">من نحن</Link>
-            <Link href="/contact" className="hover:text-white transition hover:scale-110">اتصل بنا</Link>
-            <Link href="/orders/track" className="hover:text-white transition hover:scale-110">تتبع الطلب</Link>
-          </div>
-          <p className="text-gray-600 text-sm mt-10">
-            © 2025 قصر الرضيع. جميع الحقوق محفوظة.
-          </p>
-        </div>
-      </footer>
+      {/* Footer - الشعار فقط بدون نص */}
+<footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-16">
+  <div className="container mx-auto px-4 text-center">
+    {/* الشعار فقط */}
+    <div className="flex items-center justify-center mb-8">
+      <Logo size="small" />
+    </div>
+    
+    {/* الوصف */}
+    <p className="text-gray-400 mb-8 text-lg">
+      متجركم الموثوق لملابس وأدوات الأطفال والرضع
+    </p>
+    
+    {/* الروابط */}
+    <div className="flex gap-8 justify-center text-sm text-gray-400 font-semibold">
+      <Link href="/about" className="hover:text-white transition hover:scale-110">من نحن</Link>
+      <Link href="/contact" className="hover:text-white transition hover:scale-110">اتصل بنا</Link>
+      <Link href="/orders/track" className="hover:text-white transition hover:scale-110">تتبع الطلب</Link>
+    </div>
+    
+    {/* حقوق النشر */}
+    <p className="text-gray-600 text-sm mt-10">
+      © 2025 قصر الرضيع. جميع الحقوق محفوظة.
+    </p>
+  </div>
+</footer>
+
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
