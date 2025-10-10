@@ -259,7 +259,7 @@ export default function AdminDashboard() {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 group">
-              <span className="text-3xl">🍼</span>
+<span className="text-2xl sm:text-3xl">🍼</span>
               <div>
                 <span className={`text-lg font-bold ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-gray-900 group-hover:text-blue-600'} transition block`}>
                   قصر الرضيع
@@ -270,7 +270,7 @@ export default function AdminDashboard() {
               </div>
             </Link>
 
-            <div className="flex items-center gap-3">
+<div className="flex items-center gap-2 overflow-x-auto">
               <button
                 onClick={toggleDarkMode}
                 className={`p-2 rounded-lg transition ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
@@ -422,7 +422,7 @@ export default function AdminDashboard() {
   <span className="hidden md:inline text-sm font-medium">المتجر</span>
 </Link>
 
-              <div className={`flex items-center gap-3 px-3 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+<div className={`hidden sm:flex items-center gap-3 px-3 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                 <div className="text-right">
                   <p className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                     {user?.name}
@@ -450,7 +450,7 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-1">
+<div className="hidden lg:block lg:col-span-1">
             <div className={`rounded-2xl p-4 shadow-sm border sticky top-24 transition-colors duration-300 ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}>
@@ -502,7 +502,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="lg:col-span-4">
+<div className="lg:col-span-4 col-span-full">
             <div className={`rounded-2xl p-6 mb-6 text-white transition-colors duration-300 ${
               darkMode 
                 ? 'bg-gradient-to-r from-blue-700 to-indigo-800' 
