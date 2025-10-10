@@ -58,7 +58,7 @@ export default function NotificationBell() {
       if (isAutoUpdate && newUnreadCount > prevUnreadCount) {
         playNotificationSound();
         
-        const latestNotification = newNotifications.find(n => !n.read);
+const latestNotification = newNotifications.find((n: Notification) => !n.read);
         if (latestNotification) {
           toast.success(
             `${latestNotification.title}\n${latestNotification.message}`,
