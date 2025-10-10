@@ -12,6 +12,7 @@ import {
 
 import toast from 'react-hot-toast';
 import { getAvailablePages, getAvailableStats } from '@/lib/permissions';
+import { Gift } from 'lucide-react';
 
 const icons: any = {
   LayoutDashboard,
@@ -512,18 +513,35 @@ export default function AdminDashboard() {
               </p>
             </div>
 {user?.role === 'admin' && (
-  <div className="mb-6">
-    <Link href="/admin/reviews" className="block bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
-      <div className="flex items-center gap-4">
-        <Star className="w-10 h-10" />
-        <div>
-          <h3 className="text-2xl font-black">التقييمات</h3>
-          <p className="text-purple-100 text-sm">إدارة آراء العملاء</p>
+  <>
+    {/* التقييمات */}
+    <div className="mb-6">
+      <Link href="/admin/reviews" className="block bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
+        <div className="flex items-center gap-4">
+          <Star className="w-10 h-10" />
+          <div>
+            <h3 className="text-2xl font-black">التقييمات</h3>
+            <p className="text-purple-100 text-sm">إدارة آراء العملاء</p>
+          </div>
         </div>
-      </div>
-    </Link>
-  </div>
+      </Link>
+    </div>
+
+    {/* التسويق ✅ */}
+    <div className="mb-6">
+      <Link href="/admin/marketing" className="block bg-gradient-to-br from-pink-500 to-orange-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
+        <div className="flex items-center gap-4">
+          <Gift className="w-10 h-10" />
+          <div>
+            <h3 className="text-2xl font-black">التسويق</h3>
+            <p className="text-pink-100 text-sm">العروض والكوبونات</p>
+          </div>
+        </div>
+      </Link>
+    </div>
+  </>
 )}
+
 
             {statsCards.length > 0 && (
               

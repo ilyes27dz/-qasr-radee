@@ -4,10 +4,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     
-    // دعم صور المنتجات (متعددة) ✅
     const productImages = formData.getAll('images') as File[];
-    
-    // دعم صور التقييمات (ملف واحد) ✅
     const reviewImage = formData.get('file') as File;
     
     const files = productImages.length > 0 ? productImages : (reviewImage ? [reviewImage] : []);
@@ -18,7 +15,6 @@ export async function POST(request: NextRequest) {
 
     const uploadedUrls: string[] = [];
 
-    // رفع كل ملف إلى Cloudinary ✅
     for (const file of files) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
@@ -33,18 +29,21 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           file: dataURI,
           upload_preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+          // ✅ بدون public_id أو folder!
         }),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Cloudinary error:', errorText);
         throw new Error('Cloudinary upload failed');
       }
 
       const data = await response.json();
+      console.log('✅ Upload success:', data.secure_url);
       uploadedUrls.push(data.secure_url);
     }
 
-    // إذا صورة تقييم واحدة → url ✅
     if (reviewImage && productImages.length === 0) {
       return NextResponse.json({ 
         success: true, 
@@ -52,13 +51,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // إذا صور منتجات → images ✅
     return NextResponse.json({ 
       success: true, 
       images: uploadedUrls 
     });
   } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+    console.error('❌ Upload error:', error);
+    return NextResponse.json({ 
+      error: 'Upload failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

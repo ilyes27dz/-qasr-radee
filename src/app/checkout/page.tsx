@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { CreditCard, Truck, CheckCircle, Heart, ShoppingCart, Sparkles } from 'lucide-react';
 import { useCart } from '@/components/CartContext';
 import { useWishlist } from '@/components/WishlistContext';
-import { formatPrice, ALGERIAN_WILAYAS, generateOrderNumber } from '@/lib/utils';
+import { formatPrice, ALGERIAN_WILAYAS } from '@/lib/utils';
 import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 import toast from 'react-hot-toast';
@@ -18,8 +18,12 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
 
+  // ✅ حالة الكوبون
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+
   useEffect(() => {
-    // جلب بيانات المستخدم
     try {
       const userData = localStorage.getItem('customer_user');
       if (userData) {
@@ -43,69 +47,108 @@ export default function CheckoutPage() {
 
   const shippingCost = 500;
   const cartTotal = getCartTotal();
-  const total = cartTotal + shippingCost;
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+  // ✅ حساب الخصم
+  const discount = appliedCoupon 
+    ? appliedCoupon.discountType === 'percentage'
+      ? (cartTotal * appliedCoupon.discount) / 100
+      : appliedCoupon.discount
+    : 0;
 
-  if (!formData.fullName || !formData.phone || !formData.wilaya || !formData.commune || !formData.address) {
-    toast.error('يرجى ملء جميع الحقول المطلوبة');
-    setLoading(false);
-    return;
-  }
+  const total = cartTotal + shippingCost - discount;
 
-  try {
-    // ✅ إرسال الطلب للـ API
-    const response = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customerName: formData.fullName,
-        customerEmail: user?.email || formData.email || '',
-        customerPhone: formData.phone,
-        address: formData.address,
-        wilaya: formData.wilaya,
-        commune: formData.commune,
-        notes: formData.notes,
-        paymentMethod: formData.paymentMethod,
-        subtotal: cartTotal,
-        shippingCost: shippingCost,
-        total: total,
-        items: cartItems.map(item => ({
-          productId: item.product.id,
-          productName: item.product.nameAr,
-          quantity: item.quantity,
-          price: item.product.salePrice || item.product.price,
-        })),
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'فشل إنشاء الطلب');
+  // ✅ دالة تطبيق الكوبون
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('أدخل كود الكوبون');
+      return;
     }
 
-    console.log('✅ تم حفظ الطلب في MongoDB:', data.order.orderNumber);
+    setCouponLoading(true);
+    try {
+      const response = await fetch(`/api/coupons/validate?code=${couponCode.toUpperCase()}`);
+      const data = await response.json();
 
-    // مسح السلة
-    clearCart();
+      if (!response.ok) {
+        toast.error(data.error || 'كود غير صحيح');
+        return;
+      }
 
-    // رسالة النجاح
-    toast.success('تم إرسال طلبك بنجاح! سنتصل بك قريباً ✅', {
-      duration: 5000,
-    });
+      if (data.minAmount && cartTotal < data.minAmount) {
+        toast.error(`الحد الأدنى للطلب ${data.minAmount.toLocaleString()} دج`);
+        return;
+      }
 
-    // التوجيه لصفحة الطلب
-    router.push(`/orders?number=${data.order.orderNumber}`);
-  } catch (error: any) {
-    console.error('❌ Order error:', error);
-    toast.error(error.message || 'حدث خطأ، يرجى المحاولة مرة أخرى');
-  } finally {
-    setLoading(false);
-  }
-};
+      setAppliedCoupon(data);
+      toast.success(`تم تطبيق خصم ${data.discount}${data.discountType === 'percentage' ? '%' : ' دج'} 🎉`);
+    } catch (error) {
+      toast.error('فشل التحقق من الكوبون');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    toast.success('تم إلغاء الكوبون');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (!formData.fullName || !formData.phone || !formData.wilaya || !formData.commune || !formData.address) {
+      toast.error('يرجى ملء جميع الحقول المطلوبة');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: formData.fullName,
+          customerEmail: user?.email || formData.email || '',
+          customerPhone: formData.phone,
+          address: formData.address,
+          wilaya: formData.wilaya,
+          commune: formData.commune,
+          notes: formData.notes,
+          paymentMethod: formData.paymentMethod,
+          subtotal: cartTotal,
+          shippingCost: shippingCost,
+          discount: discount,
+          total: total,
+          couponCode: appliedCoupon?.code || null,
+          items: cartItems.map(item => ({
+            productId: item.product.id,
+            productName: item.product.nameAr,
+            quantity: item.quantity,
+            price: item.product.salePrice || item.product.price,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'فشل إنشاء الطلب');
+      }
+
+      console.log('✅ تم حفظ الطلب:', data.order.orderNumber);
+
+      clearCart();
+      toast.success('تم إرسال طلبك بنجاح! سنتصل بك قريباً ✅', { duration: 5000 });
+      router.push(`/orders?number=${data.order.orderNumber}`);
+    } catch (error: any) {
+      console.error('❌ Order error:', error);
+      toast.error(error.message || 'حدث خطأ، يرجى المحاولة مرة أخرى');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -136,16 +179,12 @@ const handleSubmit = async (e: React.FormEvent) => {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-20px); }
           }
-          .animate-bounce-slow {
-            animation: bounce-slow 2s ease-in-out infinite;
-          }
+          .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
           @keyframes fade-in {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
           }
-          .animate-fade-in {
-            animation: fade-in 0.6s ease-out;
-          }
+          .animate-fade-in { animation: fade-in 0.6s ease-out; }
         `}</style>
       </div>
     );
@@ -154,45 +193,37 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-arabic">
       {/* Header */}
-      {/* Header - محسّن للموبايل */}
-{/* Header - تصميم محسّن جديد */}
-{/* Header - الشعار فقط */}
-<header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg">
-  <div className="container mx-auto px-4 py-4">
-    <div className="flex items-center justify-between">
-      {/* Logo فقط */}
-      <Link href="/" className="hover:scale-110 transition">
-        <Logo size="small" />
-      </Link>
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="hover:scale-110 transition">
+              <Logo size="small" />
+            </Link>
 
-      {/* Icons */}
-      <div className="flex items-center gap-3 md:gap-4">
-        <UserMenu />
-        
-        <Link href="/wishlist" className="relative hover:scale-110 transition">
-          <Heart className="w-6 h-6 text-gray-600 hover:text-red-500 transition" />
-          {getWishlistCount() > 0 && (
-            <span className="absolute -top-2 -left-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
-              {getWishlistCount()}
-            </span>
-          )}
-        </Link>
-        
-        <Link href="/cart" className="relative hover:scale-110 transition">
-          <ShoppingCart className="w-6 h-6 text-gray-600 hover:text-blue-600 transition" />
-          {getCartCount() > 0 && (
-            <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">
-              {getCartCount()}
-            </span>
-          )}
-        </Link>
-      </div>
-    </div>
-  </div>
-</header>
-
-
-
+            <div className="flex items-center gap-3 md:gap-4">
+              <UserMenu />
+              
+              <Link href="/wishlist" className="relative hover:scale-110 transition">
+                <Heart className="w-6 h-6 text-gray-600 hover:text-red-500 transition" />
+                {getWishlistCount() > 0 && (
+                  <span className="absolute -top-2 -left-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
+                    {getWishlistCount()}
+                  </span>
+                )}
+              </Link>
+              
+              <Link href="/cart" className="relative hover:scale-110 transition">
+                <ShoppingCart className="w-6 h-6 text-gray-600 hover:text-blue-600 transition" />
+                {getCartCount() > 0 && (
+                  <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">
+                    {getCartCount()}
+                  </span>
+                )}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Page Header */}
       <section className="py-20 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 relative overflow-hidden">
@@ -388,6 +419,47 @@ const handleSubmit = async (e: React.FormEvent) => {
                   ))}
                 </div>
 
+                {/* ✅ مربع الكوبون */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
+                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                    <span className="text-2xl">🎟️</span>
+                    هل لديك كود خصم؟
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="أدخل الكود"
+                      className="flex-1 px-3 py-2 border-2 border-purple-200 rounded-lg uppercase font-bold text-sm"
+                      disabled={appliedCoupon !== null}
+                    />
+                    {appliedCoupon ? (
+                      <button
+                        type="button"
+                        onClick={removeCoupon}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition text-sm"
+                      >
+                        إلغاء
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={applyCoupon}
+                        disabled={couponLoading}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition disabled:opacity-50 text-sm"
+                      >
+                        {couponLoading ? '...' : 'تطبيق'}
+                      </button>
+                    )}
+                  </div>
+                  {appliedCoupon && (
+                    <div className="mt-2 text-sm text-green-600 font-bold flex items-center gap-1">
+                      ✅ تم تطبيق الكوبون: {appliedCoupon.code}
+                    </div>
+                  )}
+                </div>
+
                 <div className="border-t-2 border-blue-200 pt-6 space-y-4 mb-8">
                   <div className="flex justify-between text-gray-600 text-lg">
                     <span className="font-semibold">المجموع الفرعي</span>
@@ -397,6 +469,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <span className="font-semibold">تكلفة الشحن</span>
                     <span className="font-black">{formatPrice(shippingCost)}</span>
                   </div>
+                  
+                  {/* ✅ عرض الخصم */}
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-green-600 text-lg">
+                      <span className="font-semibold">الخصم ({appliedCoupon.code})</span>
+                      <span className="font-black">-{formatPrice(discount)}</span>
+                    </div>
+                  )}
+
                   <div className="border-t-2 border-blue-200 pt-4">
                     <div className="flex justify-between text-3xl font-black text-gray-900">
                       <span>المجموع الكلي</span>
@@ -429,33 +510,27 @@ const handleSubmit = async (e: React.FormEvent) => {
       </section>
 
       {/* Footer */}
-      {/* Footer - الشعار فقط بدون نص */}
-<footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-16">
-  <div className="container mx-auto px-4 text-center">
-    {/* الشعار فقط */}
-    <div className="flex items-center justify-center mb-8">
-      <Logo size="small" />
-    </div>
-    
-    {/* الوصف */}
-    <p className="text-gray-400 mb-8 text-lg">
-      متجركم الموثوق لملابس وأدوات الأطفال والرضع
-    </p>
-    
-    {/* الروابط */}
-    <div className="flex gap-8 justify-center text-sm text-gray-400 font-semibold">
-      <Link href="/about" className="hover:text-white transition hover:scale-110">من نحن</Link>
-      <Link href="/contact" className="hover:text-white transition hover:scale-110">اتصل بنا</Link>
-      <Link href="/orders/track" className="hover:text-white transition hover:scale-110">تتبع الطلب</Link>
-    </div>
-    
-    {/* حقوق النشر */}
-    <p className="text-gray-600 text-sm mt-10">
-      © 2025 قصر الرضيع. جميع الحقوق محفوظة.
-    </p>
-  </div>
-</footer>
-
+      <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-16">
+        <div className="container mx-auto px-4 text-center">
+          <div className="flex items-center justify-center mb-8">
+            <Logo size="small" />
+          </div>
+          
+          <p className="text-gray-400 mb-8 text-lg">
+            متجركم الموثوق لملابس وأدوات الأطفال والرضع
+          </p>
+          
+          <div className="flex gap-8 justify-center text-sm text-gray-400 font-semibold">
+            <Link href="/about" className="hover:text-white transition hover:scale-110">من نحن</Link>
+            <Link href="/contact" className="hover:text-white transition hover:scale-110">اتصل بنا</Link>
+            <Link href="/orders/track" className="hover:text-white transition hover:scale-110">تتبع الطلب</Link>
+          </div>
+          
+          <p className="text-gray-600 text-sm mt-10">
+            © 2025 قصر الرضيع. جميع الحقوق محفوظة.
+          </p>
+        </div>
+      </footer>
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
@@ -464,30 +539,22 @@ const handleSubmit = async (e: React.FormEvent) => {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }
         }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
         @keyframes bounce-slow {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-20px); }
         }
-        .animate-bounce-slow {
-          animation: bounce-slow 2s ease-in-out infinite;
-        }
+        .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out;
-        }
+        .animate-fade-in { animation: fade-in 0.6s ease-out; }
         @keyframes slide-in {
           from { opacity: 0; transform: translateX(-30px); }
           to { opacity: 1; transform: translateX(0); }
         }
-        .animate-slide-in {
-          animation: slide-in 0.6s ease-out;
-        }
+        .animate-slide-in { animation: slide-in 0.6s ease-out; }
       `}</style>
     </div>
   );

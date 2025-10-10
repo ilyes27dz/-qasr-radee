@@ -27,7 +27,7 @@ model Product {
   featured        Boolean  @default(false)
   badge           String?
   enabled         Boolean  @default(true)
-  specifications  String?  // ← حقل جديد للتفاصيل الإضافية
+  specifications  String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
@@ -68,7 +68,6 @@ model Order {
   updatedAt     DateTime    @updatedAt
 }
 
-// عناصر الطلب
 model OrderItem {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   orderId     String  @db.ObjectId
@@ -127,7 +126,6 @@ model Customer {
   updatedAt DateTime  @updatedAt
 }
 
-// العناوين المحفوظة
 model Address {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   customerId String   @db.ObjectId
@@ -145,7 +143,6 @@ model Address {
   updatedAt  DateTime @updatedAt
 }
 
-// المفضلة
 model WishlistItem {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   customerId String   @db.ObjectId
@@ -157,7 +154,6 @@ model WishlistItem {
   createdAt  DateTime @default(now())
 }
 
-// التقييمات
 model Review {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
   productId  String    @db.ObjectId
@@ -171,7 +167,6 @@ model Review {
   createdAt  DateTime  @default(now())
 }
 
-// الشعارات
 model Banner {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   text      String
@@ -183,7 +178,6 @@ model Banner {
   updatedAt DateTime @updatedAt
 }
 
-// رسائل "اتصل بنا"
 model ContactMessage {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -196,12 +190,12 @@ model ContactMessage {
   createdAt DateTime @default(now())
 }
 
-// كوبونات الخصم
+// كوبونات الخصم ✅ محدث
 model Coupon {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   code        String   @unique
   discount    Float
-  discountType String
+  discountType String  // percentage أو fixed
   minAmount   Float?
   maxUses     Int?
   usedCount   Int      @default(0)
@@ -211,15 +205,34 @@ model Coupon {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
-// نموذج التقييمات والمراجعات
+
+// التقييمات العامة
 model CustomerReview {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   customerName String
-  rating      Int      // من 1 إلى 5
+  rating      Int
   comment     String
   productName String?
-  image       String?  // صورة العميل (اختياري)
-  isApproved  Boolean  @default(false) // يحتاج موافقة Admin
+  image       String?
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// العروض ✅ جديد
+model Offer {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  discount    Int      // نسبة الخصم
+  image       String?  // صورة العرض
+  category    String?  // الفئة المستهدفة
+  link        String   // رابط المنتجات
+  color       String   @default("blue")
+  isActive    Boolean  @default(true)
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
