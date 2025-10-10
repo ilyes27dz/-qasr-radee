@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Package, Eye, Search, RefreshCw, LogOut, Home,
   Clock, CheckCircle, Truck, XCircle,
-  DollarSign, Phone, MapPin, Calendar
+  DollarSign, Phone, MapPin, Calendar, Printer,
+  Trash2, Edit, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import QRCode from 'qrcode';
 
 const statusConfig = {
   pending: { label: 'قيد الانتظار', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
@@ -16,13 +18,6 @@ const statusConfig = {
   shipped: { label: 'في الطريق', color: 'bg-purple-100 text-purple-700', icon: Truck },
   delivered: { label: 'تم التسليم', color: 'bg-green-100 text-green-700', icon: CheckCircle },
   cancelled: { label: 'ملغي', color: 'bg-red-100 text-red-700', icon: XCircle },
-};
-
-const priorityConfig = {
-  low: { label: 'منخفضة', color: 'bg-gray-100 text-gray-700' },
-  medium: { label: 'متوسطة', color: 'bg-blue-100 text-blue-700' },
-  high: { label: 'عالية', color: 'bg-orange-100 text-orange-700' },
-  urgent: { label: 'عاجلة', color: 'bg-red-100 text-red-700' },
 };
 
 export default function OrdersManagementPage() {
@@ -33,6 +28,9 @@ export default function OrdersManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [user, setUser] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   useEffect(() => {
     const adminUser = localStorage.getItem('admin_user');
@@ -53,15 +51,20 @@ export default function OrdersManagementPage() {
     fetchOrders();
   }, []);
 
-  const fetchOrders = () => {
+  // ✅ جلب من MongoDB
+  const fetchOrders = async () => {
     setLoading(true);
     try {
-      // قراءة الطلبات من localStorage
-      const ordersData = JSON.parse(localStorage.getItem('orders') || '[]');
+      const response = await fetch('/api/orders');
       
-      console.log('📦 Orders loaded from localStorage:', ordersData.length);
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
       
-      // ترتيب الطلبات من الأحدث للأقدم
+      const ordersData = await response.json();
+      
+      console.log('📦 Orders loaded from MongoDB:', ordersData.length);
+      
       const sortedOrders = ordersData.sort((a: any, b: any) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
@@ -82,16 +85,203 @@ export default function OrdersManagementPage() {
     }
   };
 
-  // فلترة الطلبات عند تغيير البحث أو الحالة
+  // ✅ تغيير حالة الطلب
+  const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      toast.success('تم تحديث الحالة بنجاح ✅');
+      fetchOrders(); // إعادة تحميل الطلبات
+    } catch (error) {
+      console.error('❌ Error updating status:', error);
+      toast.error('فشل تحديث الحالة');
+    }
+  };
+
+  // ✅ حذف طلب
+  const handleDelete = async (orderId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete order');
+      }
+
+      toast.success('تم حذف الطلب بنجاح ✅');
+      fetchOrders();
+    } catch (error) {
+      console.error('❌ Error deleting order:', error);
+      toast.error('فشل حذف الطلب');
+    }
+  };
+
+  // ✅ طباعة الطلب
+  const handlePrint = async (order: any) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    // توليد QR Code
+    let qrDataUrl = '';
+    try {
+      qrDataUrl = await QRCode.toDataURL(`https://qasr-radee.vercel.app/orders?number=${order.orderNumber}`);
+    } catch (error) {
+      console.error('QR Error:', error);
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <title>طلب ${order.orderNumber}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Cairo', sans-serif; padding: 40px; }
+          .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #2563eb; padding-bottom: 20px; }
+          .header h1 { color: #2563eb; font-size: 32px; margin-bottom: 10px; }
+          .order-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+          .info-box { background: #f3f4f6; padding: 20px; border-radius: 10px; }
+          .info-box h3 { color: #1f2937; margin-bottom: 15px; font-size: 18px; }
+          .info-row { margin-bottom: 10px; }
+          .info-label { font-weight: 700; color: #4b5563; }
+          .items-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+          .items-table th, .items-table td { border: 1px solid #e5e7eb; padding: 12px; text-align: right; }
+          .items-table th { background: #2563eb; color: white; font-weight: 700; }
+          .total-section { text-align: left; margin-top: 30px; }
+          .total-row { display: flex; justify-content: space-between; padding: 10px; font-size: 18px; }
+          .total-row.final { background: #2563eb; color: white; font-weight: 900; font-size: 24px; padding: 15px; border-radius: 10px; margin-top: 10px; }
+          .qr-section { text-align: center; margin-top: 40px; page-break-inside: avoid; }
+          .footer { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 2px solid #e5e7eb; color: #6b7280; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🏰 قصر الرضيع 👶</h1>
+          <p style="color: #6b7280; font-size: 16px;">متجركم الموثوق لملابس وأدوات الأطفال والرضع</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h2 style="color: #1f2937; font-size: 24px;">فاتورة طلب رقم: ${order.orderNumber}</h2>
+          <p style="color: #6b7280;">التاريخ: ${new Date(order.createdAt).toLocaleDateString('ar-DZ', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </div>
+
+        <div class="order-info">
+          <div class="info-box">
+            <h3>📋 معلومات العميل</h3>
+            <div class="info-row"><span class="info-label">الاسم:</span> ${order.customerName}</div>
+            <div class="info-row"><span class="info-label">الهاتف:</span> ${order.customerPhone}</div>
+            ${order.customerEmail ? `<div class="info-row"><span class="info-label">البريد:</span> ${order.customerEmail}</div>` : ''}
+          </div>
+
+          <div class="info-box">
+            <h3>📍 عنوان التسليم</h3>
+            <div class="info-row"><span class="info-label">الولاية:</span> ${order.wilaya}</div>
+            <div class="info-row"><span class="info-label">البلدية:</span> ${order.commune}</div>
+            <div class="info-row"><span class="info-label">العنوان:</span> ${order.address}</div>
+          </div>
+        </div>
+
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>المنتج</th>
+              <th>السعر</th>
+              <th>الكمية</th>
+              <th>المجموع</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.items?.map((item: any) => `
+              <tr>
+                <td>${item.productName}</td>
+                <td>${item.price.toLocaleString()} دج</td>
+                <td>${item.quantity}</td>
+                <td>${(item.price * item.quantity).toLocaleString()} دج</td>
+              </tr>
+            `).join('') || ''}
+          </tbody>
+        </table>
+
+        <div class="total-section">
+          <div class="total-row">
+            <span>المجموع الفرعي:</span>
+            <span>${order.subtotal?.toLocaleString() || 0} دج</span>
+          </div>
+          <div class="total-row">
+            <span>الشحن:</span>
+            <span>${order.shippingCost?.toLocaleString() || 0} دج</span>
+          </div>
+          <div class="total-row final">
+            <span>المجموع الكلي:</span>
+            <span>${order.total?.toLocaleString() || 0} دج</span>
+          </div>
+        </div>
+
+        ${qrDataUrl ? `
+          <div class="qr-section">
+            <h3 style="margin-bottom: 15px;">تتبع طلبك</h3>
+            <img src="${qrDataUrl}" alt="QR Code" style="width: 150px; height: 150px;">
+            <p style="margin-top: 10px; color: #6b7280;">امسح الكود لتتبع طلبك</p>
+          </div>
+        ` : ''}
+
+        <div class="footer">
+          <p><strong>قصر الرضيع</strong> - جميع الحقوق محفوظة © 2025</p>
+          <p>للاستفسار: info@qasrradee.com | 0555 00 00 00</p>
+        </div>
+
+        <script>
+          window.onload = () => {
+            window.print();
+            // window.close(); // اختياري: لإغلاق النافذة بعد الطباعة
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+  };
+
+  // ✅ عرض تفاصيل الطلب في Modal
+  const handleViewDetails = async (order: any) => {
+    setSelectedOrder(order);
+    
+    // توليد QR Code
+    try {
+      const qrUrl = await QRCode.toDataURL(`https://qasr-radee.vercel.app/orders?number=${order.orderNumber}`);
+      setQrCodeUrl(qrUrl);
+    } catch (error) {
+      console.error('QR Error:', error);
+    }
+    
+    setShowModal(true);
+  };
+
+  // فلترة الطلبات
   useEffect(() => {
     let filtered = [...orders];
 
-    // فلترة حسب الحالة
     if (selectedStatus !== 'all') {
       filtered = filtered.filter(o => o.status === selectedStatus);
     }
 
-    // فلترة حسب البحث
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(o => 
@@ -126,10 +316,9 @@ export default function OrdersManagementPage() {
   };
 
   const stats = getStats();
-
   return (
     <div className="min-h-screen bg-gray-50 font-arabic">
-      {/* Header */}
+      {/* Header - نفس الكود السابق */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -154,10 +343,7 @@ export default function OrdersManagementPage() {
                 <Home className="w-5 h-5 text-gray-600" />
               </Link>
 
-              <button
-                onClick={handleLogout}
-                className="p-2 hover:bg-red-50 rounded-lg"
-              >
+              <button onClick={handleLogout} className="p-2 hover:bg-red-50 rounded-lg">
                 <LogOut className="w-5 h-5 text-red-600" />
               </button>
             </div>
@@ -166,7 +352,7 @@ export default function OrdersManagementPage() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        {/* Stats */}
+        {/* Stats - نفس الكود السابق */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 shadow-sm border">
             <div className="flex items-center gap-3">
@@ -253,10 +439,9 @@ export default function OrdersManagementPage() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters - نفس الكود السابق */}
         <div className="bg-white rounded-xl p-4 shadow-sm border mb-6">
           <div className="grid md:grid-cols-2 gap-4">
-            {/* Search */}
             <div className="relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -268,7 +453,6 @@ export default function OrdersManagementPage() {
               />
             </div>
 
-            {/* Status Filter */}
             <div className="flex gap-2 overflow-x-auto">
               <button
                 onClick={() => setSelectedStatus('all')}
@@ -331,9 +515,6 @@ export default function OrdersManagementPage() {
                       <p className="text-xl text-gray-500 font-bold">
                         {orders.length === 0 ? 'لا توجد طلبات' : 'لا توجد نتائج للبحث'}
                       </p>
-                      {orders.length === 0 && (
-                        <p className="text-gray-400 mt-2">عندما يتم إنشاء طلبات ستظهر هنا</p>
-                      )}
                     </td>
                   </tr>
                 ) : (
@@ -376,10 +557,18 @@ export default function OrdersManagementPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2 w-fit ${statusInfo.color}`}>
-                            <StatusIcon className="w-4 h-4" />
-                            {statusInfo.label}
-                          </span>
+                          {/* ✅ Dropdown لتغيير الحالة */}
+                          <select
+                            value={order.status}
+                            onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
+                            className={`px-3 py-1 rounded-full text-sm font-semibold border-2 ${statusInfo.color} cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          >
+                            {Object.entries(statusConfig).map(([key, config]) => (
+                              <option key={key} value={key}>
+                                {config.label}
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2">
@@ -398,13 +587,34 @@ export default function OrdersManagementPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <Link
-                            href={`/admin/orders/${order.id}`}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition font-semibold"
-                          >
-                            <Eye className="w-4 h-4" />
-                            عرض
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            {/* ✅ زر التفاصيل */}
+                            <button
+                              onClick={() => handleViewDetails(order)}
+                              className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"
+                              title="التفاصيل"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            
+                            {/* ✅ زر الطباعة */}
+                            <button
+                              onClick={() => handlePrint(order)}
+                              className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition"
+                              title="طباعة"
+                            >
+                              <Printer className="w-4 h-4" />
+                            </button>
+                            
+                            {/* ✅ زر الحذف */}
+                            <button
+                              onClick={() => handleDelete(order.id)}
+                              className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
+                              title="حذف"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -415,6 +625,92 @@ export default function OrdersManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* ✅ Modal التفاصيل */}
+      {showModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                تفاصيل الطلب {selectedOrder.orderNumber}
+              </h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              {/* معلومات العميل */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-bold text-gray-900 mb-4">📋 معلومات العميل</h3>
+                <div className="space-y-2">
+                  <p><span className="font-semibold">الاسم:</span> {selectedOrder.customerName}</p>
+                  <p><span className="font-semibold">الهاتف:</span> {selectedOrder.customerPhone}</p>
+                  {selectedOrder.customerEmail && (
+                    <p><span className="font-semibold">البريد:</span> {selectedOrder.customerEmail}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* عنوان التسليم */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-bold text-gray-900 mb-4">📍 عنوان التسليم</h3>
+                <div className="space-y-2">
+                  <p><span className="font-semibold">الولاية:</span> {selectedOrder.wilaya}</p>
+                  <p><span className="font-semibold">البلدية:</span> {selectedOrder.commune}</p>
+                  <p><span className="font-semibold">العنوان:</span> {selectedOrder.address}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* المنتجات */}
+            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              <h3 className="font-bold text-gray-900 mb-4">📦 المنتجات</h3>
+              <div className="space-y-2">
+                {selectedOrder.items?.map((item: any, index: number) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-white rounded-lg">
+                    <div>
+                      <p className="font-semibold">{item.productName}</p>
+                      <p className="text-sm text-gray-600">الكمية: {item.quantity}</p>
+                    </div>
+                    <p className="font-bold text-blue-600">
+                      {(item.price * item.quantity).toLocaleString()} دج
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* الإجمالي */}
+            <div className="bg-blue-50 rounded-xl p-4 mb-6">
+              <div className="flex justify-between mb-2">
+                <span>المجموع الفرعي:</span>
+                <span className="font-bold">{selectedOrder.subtotal?.toLocaleString() || 0} دج</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span>الشحن:</span>
+                <span className="font-bold">{selectedOrder.shippingCost?.toLocaleString() || 0} دج</span>
+              </div>
+              <div className="flex justify-between text-xl font-bold text-blue-600 pt-2 border-t">
+                <span>المجموع الكلي:</span>
+                <span>{selectedOrder.total?.toLocaleString() || 0} دج</span>
+              </div>
+            </div>
+
+            {/* QR Code */}
+            {qrCodeUrl && (
+              <div className="text-center bg-gray-50 rounded-xl p-4">
+                <h3 className="font-bold text-gray-900 mb-4">📱 رمز التتبع</h3>
+                <img src={qrCodeUrl} alt="QR Code" className="w-40 h-40 mx-auto" />
+                <p className="text-sm text-gray-600 mt-2">امسح الكود لتتبع الطلب</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
