@@ -36,41 +36,40 @@ export default function OrdersPage() {
   }, [orderNumberFromUrl]);
 
   const fetchOrder = async (orderNum: string) => {
-  setLoading(true);
-  setNotFound(false);
-  setOrder(null);
-  
-  try {
-    // ✅ جلب من MongoDB بدلاً من localStorage
-    const response = await fetch('/api/orders');
+    setLoading(true);
+    setNotFound(false);
+    setOrder(null);
     
-    if (!response.ok) {
-      throw new Error('فشل جلب الطلبات');
-    }
-    
-    const orders = await response.json();
-    console.log('📦 تم جلب الطلبات من MongoDB:', orders.length);
-    
-    const foundOrder = orders.find((o: any) => o.orderNumber === orderNum);
-    
-    if (foundOrder) {
-      setOrder(foundOrder);
-      console.log('✅ تم العثور على الطلب:', foundOrder);
-      toast.success('تم العثور على الطلب! ✅');
-    } else {
+    try {
+      // ✅ جلب من MongoDB بدلاً من localStorage
+      const response = await fetch('/api/orders');
+      
+      if (!response.ok) {
+        throw new Error('فشل جلب الطلبات');
+      }
+      
+      const orders = await response.json();
+      console.log('📦 تم جلب الطلبات من MongoDB:', orders.length);
+      
+      const foundOrder = orders.find((o: any) => o.orderNumber === orderNum);
+      
+      if (foundOrder) {
+        setOrder(foundOrder);
+        console.log('✅ تم العثور على الطلب:', foundOrder);
+        toast.success('تم العثور على الطلب! ✅');
+      } else {
+        setNotFound(true);
+        console.log('❌ الطلب غير موجود:', orderNum);
+        toast.error('لم يتم العثور على الطلب');
+      }
+    } catch (error: any) {
+      console.error('❌ خطأ:', error);
       setNotFound(true);
-      console.log('❌ الطلب غير موجود:', orderNum);
-      toast.error('لم يتم العثور على الطلب');
+      toast.error('حدث خطأ في البحث');
+    } finally {
+      setLoading(false);
     }
-  } catch (error: any) {
-    console.error('❌ خطأ:', error);
-    setNotFound(true);
-    toast.error('حدث خطأ في البحث');
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,18 +94,13 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50 font-arabic">
-      {/* Header */}
+      {/* Header - مُصحَّح ✅ */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3 group">
+            {/* الشعار فقط */}
+            <Link href="/" className="hover:scale-110 transition">
               <Logo size="small" />
-              <div>
-                <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 group-hover:from-purple-600 group-hover:to-pink-600 transition block">
-                  قصر الرضيع
-                </span>
-                <span className="text-xs text-gray-500 font-semibold">Baby Palace Store</span>
-              </div>
             </Link>
 
             <div className="flex items-center gap-4">
@@ -282,7 +276,7 @@ export default function OrdersPage() {
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-lg font-semibold text-gray-700">الشحن:</span>
                   <span className="text-xl font-bold text-gray-700">
-                    {order.shipping?.toLocaleString()} دج
+                    {order.shippingCost?.toLocaleString()} دج
                   </span>
                 </div>
               </div>
@@ -313,7 +307,7 @@ export default function OrdersPage() {
                   <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200 mt-4">
                     <p className="text-gray-700 font-black mb-2">طريقة الدفع:</p>
                     <p className="text-gray-900">
-                      {order.paymentMethod === 'cash' ? 'الدفع عند الاستلام 💵' : 'بطاقة بنكية 💳'}
+                      {order.paymentMethod === 'cash_on_delivery' || order.paymentMethod === 'cash' ? 'الدفع عند الاستلام 💵' : 'بطاقة بنكية 💳'}
                     </p>
                   </div>
                 </div>
@@ -323,12 +317,12 @@ export default function OrdersPage() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer - مُصحَّح ✅ */}
       <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-16">
         <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-8">
+          {/* الشعار فقط */}
+          <div className="flex items-center justify-center mb-8">
             <Logo size="small" />
-            <span className="text-3xl font-black">قصر الرضيع</span>
           </div>
           <p className="text-gray-400 mb-8 text-lg">
             متجركم الموثوق لملابس وأدوات الأطفال والرضع
