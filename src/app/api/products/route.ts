@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -10,7 +13,6 @@ export async function GET(request: NextRequest) {
 
     const where: any = {};
 
-    // فلترة المنتجات النشطة فقط
     where.enabled = true;
 
     if (category && category !== 'all') {
@@ -31,12 +33,47 @@ export async function GET(request: NextRequest) {
 
     const products = await prisma.product.findMany({
       where,
+      include: {
+        orderItems: {
+          select: {
+            quantity: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
-    console.log('✅ Found products:', products.length);
+    // جلب جميع التقييمات
+    const allReviews = await prisma.customerReview.findMany({
+      where: { isApproved: true },
+    });
 
-    return NextResponse.json(products);
+    // حساب المبيعات والتقييمات الحقيقية
+    const productsWithStats = products.map(product => {
+      // حساب المبيعات الحقيقية من الطلبات
+      const realSales = product.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+
+      // جلب تقييمات هذا المنتج بالاسم
+      const productReviews = allReviews.filter(r => r.productName === product.nameAr);
+
+      // حساب التقييم الحقيقي
+      const realRating = productReviews.length > 0
+        ? productReviews.reduce((sum, review) => sum + review.rating, 0) / productReviews.length
+        : 0;
+
+      const { orderItems, ...productData } = product;
+
+      return {
+        ...productData,
+        sales: realSales,
+        rating: parseFloat(realRating.toFixed(1)),
+        reviewCount: productReviews.length,
+      };
+    });
+
+    console.log('✅ Found products:', productsWithStats.length);
+
+    return NextResponse.json(productsWithStats);
   } catch (error) {
     console.error('❌ Error fetching products:', error);
     return NextResponse.json({ 

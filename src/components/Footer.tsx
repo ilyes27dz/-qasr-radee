@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Logo from './Logo';
-import { Facebook, Instagram, Phone, Mail, MapPin } from 'lucide-react';
+import { Facebook, Phone, Mail, MapPin } from 'lucide-react';
+import { CONTACT_INFO } from '@/lib/constants';
 
 export default function Footer() {
   return (
@@ -17,13 +18,13 @@ export default function Footer() {
               متجركم الموثوق لملابس وأدوات الأطفال والرضع في الجزائر. جودة عالية وأسعار منافسة.
             </p>
             <div className="flex gap-3">
-              <a href="https://web.facebook.com/profile.php?id=100087800495088&_rdc=1&_rdr#" target="_blank" rel="noopener noreferrer" 
+              <a href={CONTACT_INFO.facebook} target="_blank" rel="noopener noreferrer" 
                  className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="https://instagram.com/qsrradi3" target="_blank" rel="noopener noreferrer"
-                 className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center hover:opacity-90 transition">
-                <Instagram className="w-5 h-5" />
+              <a href={CONTACT_INFO.tiktok} target="_blank" rel="noopener noreferrer"
+                 className="w-10 h-10 bg-black rounded-full flex items-center justify-center hover:bg-gray-800 transition">
+                <span className="text-xl">📱</span>
               </a>
             </div>
           </div>
@@ -59,8 +60,8 @@ export default function Footer() {
                 <Phone className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-white">الهاتف</p>
-                  <a href="tel:+213555000000" className="hover:text-white transition">
-                    0558864755
+                  <a href={`tel:${CONTACT_INFO.phone}`} className="hover:text-white transition">
+                    {CONTACT_INFO.phone}
                   </a>
                 </div>
               </li>
@@ -68,8 +69,8 @@ export default function Footer() {
                 <Mail className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-white">البريد</p>
-                  <a href="mailto:info@qsrradi3.com" className="hover:text-white transition">
-                    info@qsrradi3.com
+                  <a href={`mailto:${CONTACT_INFO.email}`} className="hover:text-white transition">
+                    {CONTACT_INFO.email}
                   </a>
                 </div>
               </li>
@@ -77,7 +78,7 @@ export default function Footer() {
                 <MapPin className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-white">العنوان</p>
-                  <p>سيدي علي - مستغانم-الجزائر</p>
+                  <p>{CONTACT_INFO.address}</p>
                 </div>
               </li>
             </ul>

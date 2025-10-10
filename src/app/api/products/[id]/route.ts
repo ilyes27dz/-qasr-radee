@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -8,6 +11,13 @@ export async function GET(
   try {
     const product = await prisma.product.findUnique({
       where: { id: params.id },
+      include: {
+        orderItems: {
+          select: {
+            quantity: true,
+          },
+        },
+      },
     });
 
     if (!product) {
@@ -17,7 +27,31 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(product);
+    // جلب تقييمات هذا المنتج من CustomerReview بناءً على الاسم
+    const productReviews = await prisma.customerReview.findMany({
+      where: {
+        productName: product.nameAr,
+        isApproved: true,
+      },
+    });
+
+    // حساب المبيعات الحقيقية
+    const realSales = product.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+    
+    // حساب التقييم الحقيقي
+    const realRating = productReviews.length > 0
+      ? productReviews.reduce((sum, review) => sum + review.rating, 0) / productReviews.length
+      : 0;
+
+    // إرجاع المنتج مع البيانات الحقيقية
+    const { orderItems, ...productData } = product;
+
+    return NextResponse.json({
+      ...productData,
+      sales: realSales,
+      rating: parseFloat(realRating.toFixed(1)),
+      reviewCount: productReviews.length,
+    });
   } catch (error) {
     console.error('Error fetching product:', error);
     return NextResponse.json(

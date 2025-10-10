@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   Send, Mail, Phone, MapPin, MessageSquare, 
-  Facebook, ArrowRight, User, Check 
+  Facebook, ArrowRight, User
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CONTACT_INFO } from '@/lib/constants';
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,6 @@ export default function ContactPage() {
     setLoading(true);
 
     try {
-      // حفظ الرسالة في localStorage
       const messages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
       
       const newMessage = {
@@ -33,13 +33,12 @@ export default function ContactPage() {
         createdAt: new Date().toISOString(),
       };
 
-      messages.unshift(newMessage); // إضافة في البداية
+      messages.unshift(newMessage);
       localStorage.setItem('contact_messages', JSON.stringify(messages));
 
       toast.success('تم إرسال رسالتك بنجاح! ✅');
       toast('سنتواصل معك قريباً 📞', { icon: '👋' });
 
-      // إعادة تعيين النموذج
       setFormData({
         name: '',
         email: '',
@@ -97,6 +96,7 @@ export default function ContactPage() {
             <h2 className="text-3xl font-black text-gray-900 mb-6">معلومات التواصل</h2>
             
             <div className="space-y-4 mb-8">
+              {/* الهاتف */}
               <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -104,13 +104,14 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">اتصل بنا</p>
-                    <a href="tel:0555000000" className="text-xl font-bold text-gray-900 hover:text-blue-600">
-                      0555 00 00 00
+                    <a href={`tel:${CONTACT_INFO.phone}`} className="text-xl font-bold text-gray-900 hover:text-blue-600">
+                      {CONTACT_INFO.phone}
                     </a>
                   </div>
                 </div>
               </div>
 
+              {/* واتساب */}
               <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center">
@@ -119,16 +120,18 @@ export default function ContactPage() {
                   <div>
                     <p className="text-sm text-gray-600 mb-1">واتساب</p>
                     <a 
-                      href="https://wa.me/213555000000" 
+                      href={`https://wa.me/${CONTACT_INFO.whatsapp}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="text-xl font-bold text-gray-900 hover:text-green-600"
                     >
-                      +213 555 00 00 00
+                      +{CONTACT_INFO.whatsapp}
                     </a>
                   </div>
                 </div>
               </div>
 
+              {/* البريد */}
               <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center">
@@ -136,13 +139,14 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">البريد الإلكتروني</p>
-                    <a href="mailto:info@babypalace.dz" className="text-xl font-bold text-gray-900 hover:text-red-600">
-                      info@babypalace.dz
+                    <a href={`mailto:${CONTACT_INFO.email}`} className="text-xl font-bold text-gray-900 hover:text-red-600">
+                      {CONTACT_INFO.email}
                     </a>
                   </div>
                 </div>
               </div>
 
+              {/* العنوان */}
               <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -150,11 +154,12 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">العنوان</p>
-                    <p className="text-xl font-bold text-gray-900">الجزائر العاصمة</p>
+                    <p className="text-xl font-bold text-gray-900">{CONTACT_INFO.address}</p>
                   </div>
                 </div>
               </div>
 
+              {/* فيسبوك */}
               <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -163,11 +168,32 @@ export default function ContactPage() {
                   <div>
                     <p className="text-sm text-gray-600 mb-1">فيسبوك</p>
                     <a 
-                      href="https://facebook.com/babypalace" 
+                      href={CONTACT_INFO.facebook}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="text-xl font-bold text-gray-900 hover:text-blue-600"
                     >
-                      @babypalace
+                      قصر الرضيع
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* تيك توك */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-black rounded-xl flex items-center justify-center">
+                    <span className="text-2xl">📱</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">تيك توك</p>
+                    <a 
+                      href={CONTACT_INFO.tiktok}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xl font-bold text-gray-900 hover:text-black"
+                    >
+                      @mostapha.lak
                     </a>
                   </div>
                 </div>
@@ -179,11 +205,11 @@ export default function ContactPage() {
               <div className="space-y-2 text-gray-700">
                 <p className="flex justify-between">
                   <span className="font-semibold">السبت - الخميس:</span>
-                  <span>9:00 ص - 6:00 م</span>
+                  <span>{CONTACT_INFO.workingHours.weekdays}</span>
                 </p>
                 <p className="flex justify-between">
                   <span className="font-semibold">الجمعة:</span>
-                  <span className="text-red-600 font-bold">مغلق</span>
+                  <span className="text-red-600 font-bold">{CONTACT_INFO.workingHours.friday}</span>
                 </p>
               </div>
             </div>

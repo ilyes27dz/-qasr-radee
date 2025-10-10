@@ -13,6 +13,8 @@ import CustomerReviews from '@/components/CustomerReviews';
 import UserMenu from '@/components/UserMenu';
 import Footer from '@/components/Footer';
 import toast from 'react-hot-toast';
+import { CONTACT_INFO } from '@/lib/constants';
+
 import ProductReviewsList from '@/components/ProductReviewsList';
 
 
@@ -42,7 +44,7 @@ export default function HomePage() {
   const fetchFeaturedProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/products?featured=true');
+const response = await fetch('/api/products?sort=sales&limit=6');
       
       if (!response.ok) {
         throw new Error('Failed to fetch products');
@@ -53,7 +55,7 @@ export default function HomePage() {
       console.log('✅ Featured products loaded:', data);
       
       if (Array.isArray(data) && data.length > 0) {
-        setBestSellers(data.slice(0, 3));
+setBestSellers(data.slice(0, 3));
       } else {
         console.log('⚠️ No featured products found');
         setBestSellers([]);
@@ -392,7 +394,7 @@ const getProductImage = (images: string[]) => {
         {showContactMenu && (
           <div className="absolute bottom-16 left-0 bg-white rounded-xl shadow-xl p-3 space-y-2 w-48">
             <a
-              href="https://wa.me/213555000000"
+  href={`https://wa.me/${CONTACT_INFO.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition text-sm font-medium"
@@ -401,7 +403,7 @@ const getProductImage = (images: string[]) => {
               <span>واتساب</span>
             </a>
             <a
-              href="https://facebook.com/qsrradi3"
+              href="https://web.facebook.com/profile.php?id=100087800495088&_rdc=1&_rdr#"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium"

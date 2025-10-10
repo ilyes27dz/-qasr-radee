@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Truck, Phone, Gift, Zap, Package, Shield, X, Sparkles, Heart } from 'lucide-react';
+import { CONTACT_INFO } from '@/lib/constants';
 
 export default function TopBanner() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -112,7 +113,7 @@ export default function TopBanner() {
             </div>
             <span className="hidden md:flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              <span>0555 00 00 00</span>
+<span>{CONTACT_INFO.phone}</span>
             </span>
           </div>
 
