@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  
+  // ✅ مهم للـ Prisma
+  outputFileTracing: true,
+  
   images: {
     domains: ['localhost', 'i.pinimg.com', 'images.unsplash.com', 'res.cloudinary.com'],
     remotePatterns: [
@@ -10,6 +14,7 @@ const nextConfig = {
       },
     ],
   },
+  
   async headers() {
     return [
       {
@@ -23,9 +28,11 @@ const nextConfig = {
       },
     ];
   },
+  
   typescript: {
     ignoreBuildErrors: false,
   },
+  
   eslint: {
     ignoreDuringBuilds: false,
   },
