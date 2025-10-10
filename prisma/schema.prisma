@@ -190,12 +190,12 @@ model ContactMessage {
   createdAt DateTime @default(now())
 }
 
-// كوبونات الخصم ✅ محدث
+// كوبونات الخصم
 model Coupon {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   code        String   @unique
   discount    Float
-  discountType String  // percentage أو fixed
+  discountType String
   minAmount   Float?
   maxUses     Int?
   usedCount   Int      @default(0)
@@ -219,15 +219,15 @@ model CustomerReview {
   updatedAt   DateTime @updatedAt
 }
 
-// العروض ✅ جديد
+// العروض
 model Offer {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String
-  discount    Int      // نسبة الخصم
-  image       String?  // صورة العرض
-  category    String?  // الفئة المستهدفة
-  link        String   // رابط المنتجات
+  discount    Int
+  image       String?
+  category    String?
+  link        String
   color       String   @default("blue")
   isActive    Boolean  @default(true)
   startDate   DateTime @default(now())
@@ -235,4 +235,15 @@ model Offer {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// الإشعارات ✅ جديد
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      String   // "order", "review", "contact"
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

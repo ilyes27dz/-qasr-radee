@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createNotification } from '@/lib/notifications';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -99,6 +100,14 @@ export async function POST(request: Request) {
 
       console.log(`✅ تم خصم ${item.quantity} من المنتج ${item.productName || item.nameAr}`);
     }
+
+    // 🔔 إنشاء إشعار للـ Admin
+    await createNotification(
+      'order',
+      '📦 طلبية جديدة!',
+      `طلبية جديدة من ${order.customerName} - ${order.total.toLocaleString()} دج`,
+      `/admin/orders/${order.id}`
+    );
 
     console.log('✅ تم حفظ الطلب بنجاح:', order.orderNumber);
 

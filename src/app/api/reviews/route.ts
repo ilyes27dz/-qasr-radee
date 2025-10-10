@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createNotification } from '@/lib/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,14 @@ export async function POST(request: Request) {
         isApproved: false, // يحتاج موافقة
       },
     });
+
+    // 🔔 إنشاء إشعار للـ Admin
+    await createNotification(
+      'review',
+      '⭐ تقييم جديد!',
+      `تقييم ${review.rating} نجوم من ${review.customerName}`,
+      '/admin/reviews'
+    );
 
     return NextResponse.json(review, { status: 201 });
   } catch (error) {

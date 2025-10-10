@@ -9,6 +9,7 @@ import {
   BarChart3, UserCog, ArrowUpRight, Bell,
   Moon, Sun, Download, Link2, Star
 } from 'lucide-react';
+import NotificationBell from '@/components/NotificationBell';
 
 import toast from 'react-hot-toast';
 import { getAvailablePages, getAvailableStats } from '@/lib/permissions';
@@ -405,17 +406,20 @@ export default function AdminDashboard() {
                 <RefreshCw className={`w-5 h-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
               </button>
 
-              <Link 
-                href="/"
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
-                  darkMode 
-                    ? 'text-gray-300 hover:text-blue-400 hover:bg-gray-700' 
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-                }`}
-              >
-                <Home className="w-5 h-5" />
-                <span className="hidden md:inline text-sm font-medium">المتجر</span>
-              </Link>
+            {/* الإشعارات */}
+<NotificationBell />
+
+<Link 
+  href="/"
+  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
+    darkMode 
+      ? 'text-gray-300 hover:text-blue-400 hover:bg-gray-700' 
+      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+  }`}
+>
+  <Home className="w-5 h-5" />
+  <span className="hidden md:inline text-sm font-medium">المتجر</span>
+</Link>
 
               <div className={`flex items-center gap-3 px-3 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                 <div className="text-right">
