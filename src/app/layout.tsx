@@ -12,12 +12,20 @@ const cairo = Cairo({
   display: 'swap',
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'قصر الرضيع | متجر ملابس وأدوات الأطفال والرضع',
   description: 'أفضل متجر لملابس وأدوات الأطفال والرضع في الجزائر. توصيل سريع وأسعار منافسة.',
-  keywords: 'ملابس أطفال, أدوات رضع, متجر أطفال, قصر الرضيع',
+  keywords: 'ملابس أطفال, أدوات رضع, متجر أطفال, قصر الرضيع, Baby Palace',
+  authors: [{ name: 'قصر الرضيع' }],
   icons: {
-    icon: '/favicon.ico',
+    icon: '/LOGO.jpg',
+    shortcut: '/LOGO.jpg',
+    apple: '/LOGO.jpg',
+  },
+  openGraph: {
+    title: 'قصر الرضيع | Baby Palace',
+    description: 'متجر متخصص في ملابس وأدوات الأطفال والرضع في الجزائر',
+    images: ['/LOGO.jpg'],
   },
 };
 
@@ -31,6 +39,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className="font-arabic antialiased bg-white">
         <CartProvider>
@@ -43,6 +52,19 @@ export default function RootLayout({
                   background: '#1f2937',
                   color: '#fff',
                   fontFamily: 'Cairo, sans-serif',
+                  zIndex: 9998,
+                },
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
+                  },
+                },
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
                 },
               }}
             />

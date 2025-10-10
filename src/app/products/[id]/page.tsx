@@ -348,7 +348,7 @@ const getProductImage = (images: string[] | undefined) => {
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600 font-bold text-xl">✓</span>
-                    <span><strong>آمن للأطفال:</strong> خالي من المواد الضارة ومعتمد صحياً</span>
+                    <span><strong>آمن للأطفال:</strong> خالي من المواد الضارة لأبنائكم </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600 font-bold text-xl">✓</span>
@@ -356,7 +356,7 @@ const getProductImage = (images: string[] | undefined) => {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600 font-bold text-xl">✓</span>
-                    <span><strong>ضمان الجودة:</strong> إرجاع مجاني خلال 7 أيام</span>
+                    <span><strong>ضمان الجودة:</strong> الصورة حقيقية للمنتوج</span>
                   </li>
                 </ul>
               </div>

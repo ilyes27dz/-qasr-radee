@@ -3,18 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   LayoutDashboard, Package, ShoppingCart, Users, Settings, 
   DollarSign, LogOut, Home, RefreshCw, FileText,
   BarChart3, UserCog, ArrowUpRight, Bell,
-  Moon, Sun, Download, Link2, Star
+  Moon, Sun, Download, Link2, Star, Gift, Menu, X
 } from 'lucide-react';
 import NotificationBell from '@/components/NotificationBell';
-
-
 import toast from 'react-hot-toast';
 import { getAvailablePages, getAvailableStats } from '@/lib/permissions';
-import { Gift } from 'lucide-react';
 
 const icons: any = {
   LayoutDashboard,
@@ -38,6 +36,7 @@ export default function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [showStaffLinks, setShowStaffLinks] = useState(false);
   const [staffList, setStaffList] = useState<any[]>([]);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     const adminUser = localStorage.getItem('admin_user');
@@ -66,7 +65,7 @@ export default function AdminDashboard() {
     if (userData.role === 'admin') {
       fetchStaffList();
     }
-  }, []);
+  }, [router]);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -253,24 +252,42 @@ export default function AdminDashboard() {
       </div>
     );
   }
+
   return (
     <div className={`min-h-screen font-arabic transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-gray-50 to-gray-100'}`}>
-      <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-50 shadow-sm transition-colors duration-300`}>
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 group">
-<span className="text-2xl sm:text-3xl">🍼</span>
-              <div>
-                <span className={`text-lg font-bold ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-gray-900 group-hover:text-blue-600'} transition block`}>
-                  قصر الرضيع
-                </span>
-                <span className={`text-xs ${darkMode ? 'text-blue-400' : 'text-blue-600'} font-semibold`}>
-                  {user?.role === 'admin' ? 'لوحة التحكم - مدير' : `لوحة التحكم - ${user?.department || 'موظف'}`}
-                </span>
-              </div>
-            </Link>
+    <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-40 shadow-sm transition-colors duration-300`}>
+  <div className="container mx-auto px-4 py-3">
+    <div className="flex items-center justify-between overflow-visible">
 
-<div className="flex items-center gap-2 overflow-x-auto">
+            <div className="flex items-center gap-3">
+              <Link href="/" className="flex items-center gap-2 group">
+                <Image 
+                  src="/LOGO.jpg" 
+                  alt="قصر الرضيع" 
+                  width={40} 
+                  height={40}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg"
+                />
+                <div>
+                  <span className={`text-base sm:text-lg font-bold ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-gray-900 group-hover:text-blue-600'} transition block`}>
+                    قصر الرضيع
+                  </span>
+                  <span className={`text-xs ${darkMode ? 'text-blue-400' : 'text-blue-600'} font-semibold`}>
+                    {user?.role === 'admin' ? 'لوحة التحكم - مدير' : `لوحة التحكم - ${user?.department || 'موظف'}`}
+                  </span>
+                </div>
+              </Link>
+
+              {/* زر القائمة للموبايل */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className={`lg:hidden p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              >
+                <Menu className={`w-6 h-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              </button>
+            </div>
+
+<div className="flex items-center gap-2">
               <button
                 onClick={toggleDarkMode}
                 className={`p-2 rounded-lg transition ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
@@ -407,22 +424,21 @@ export default function AdminDashboard() {
                 <RefreshCw className={`w-5 h-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
               </button>
 
-            {/* الإشعارات */}
-<NotificationBell />
+              <NotificationBell />
 
-<Link 
-  href="/"
-  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
-    darkMode 
-      ? 'text-gray-300 hover:text-blue-400 hover:bg-gray-700' 
-      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-  }`}
->
-  <Home className="w-5 h-5" />
-  <span className="hidden md:inline text-sm font-medium">المتجر</span>
-</Link>
+              <Link 
+                href="/"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
+                  darkMode 
+                    ? 'text-gray-300 hover:text-blue-400 hover:bg-gray-700' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                }`}
+              >
+                <Home className="w-5 h-5" />
+                <span className="hidden md:inline text-sm font-medium">المتجر</span>
+              </Link>
 
-<div className={`hidden sm:flex items-center gap-3 px-3 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <div className={`hidden sm:flex items-center gap-3 px-3 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                 <div className="text-right">
                   <p className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                     {user?.name}
@@ -448,9 +464,85 @@ export default function AdminDashboard() {
         </div>
       </header>
 
+      {/* Mobile Menu Drawer */}
+      {showMobileMenu && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-50 lg:hidden"
+            onClick={() => setShowMobileMenu(false)}
+          />
+          
+          <div className={`fixed top-0 right-0 h-full w-72 z-50 lg:hidden transition-transform duration-300 ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          } shadow-2xl overflow-y-auto`}>
+            <div className={`flex items-center justify-between p-4 border-b ${
+              darkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
+              <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                القائمة
+              </h3>
+              <button
+                onClick={() => setShowMobileMenu(false)}
+                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              >
+                <X className={`w-5 h-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              </button>
+            </div>
+
+            <nav className="p-4 space-y-2">
+              {availablePages.map((page) => {
+                const Icon = icons[page.icon] || LayoutDashboard;
+                
+                return (
+                  <Link
+                    key={page.id}
+                    href={page.path}
+                    onClick={() => setShowMobileMenu(false)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+                      darkMode 
+                        ? 'text-gray-300 hover:bg-blue-900/20 hover:text-blue-400' 
+                        : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-semibold text-sm">{page.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className={`m-4 p-3 rounded-xl ${darkMode ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
+              <div className="flex items-center gap-2">
+                {user?.role === 'admin' ? (
+                  <>
+                    <UserCog className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                    <span className={`text-sm font-bold ${darkMode ? 'text-blue-300' : 'text-blue-900'}`}>
+                      مدير النظام
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Users className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                    <span className={`text-sm font-bold ${darkMode ? 'text-blue-300' : 'text-blue-900'}`}>
+                      موظف
+                    </span>
+                  </>
+                )}
+              </div>
+              {user?.department && (
+                <p className={`text-xs mt-1 ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+                  قسم: {user.department}
+                </p>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
       <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-5 gap-6">
-<div className="lg:col-span-1">
+          {/* Sidebar - Desktop Only */}
+          <div className="hidden lg:block lg:col-span-1">
             <div className={`rounded-2xl p-4 shadow-sm border sticky top-24 transition-colors duration-300 ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}>
@@ -502,7 +594,8 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-<div className="lg:col-span-4 col-span-full">
+          {/* Main Content */}
+          <div className="lg:col-span-4">
             <div className={`rounded-2xl p-6 mb-6 text-white transition-colors duration-300 ${
               darkMode 
                 ? 'bg-gradient-to-r from-blue-700 to-indigo-800' 
@@ -517,39 +610,36 @@ export default function AdminDashboard() {
                   : `لديك صلاحية الوصول إلى ${availablePages.length} صفحة`}
               </p>
             </div>
-{user?.role === 'admin' && (
-  <>
-    {/* التقييمات */}
-    <div className="mb-6">
-      <Link href="/admin/reviews" className="block bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
-        <div className="flex items-center gap-4">
-          <Star className="w-10 h-10" />
-          <div>
-            <h3 className="text-2xl font-black">التقييمات</h3>
-            <p className="text-purple-100 text-sm">إدارة آراء العملاء</p>
-          </div>
-        </div>
-      </Link>
-    </div>
 
-    {/* التسويق ✅ */}
-    <div className="mb-6">
-      <Link href="/admin/marketing" className="block bg-gradient-to-br from-pink-500 to-orange-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
-        <div className="flex items-center gap-4">
-          <Gift className="w-10 h-10" />
-          <div>
-            <h3 className="text-2xl font-black">التسويق</h3>
-            <p className="text-pink-100 text-sm">العروض والكوبونات</p>
-          </div>
-        </div>
-      </Link>
-    </div>
-  </>
-)}
+            {user?.role === 'admin' && (
+              <>
+                <div className="mb-6">
+                  <Link href="/admin/reviews" className="block bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
+                    <div className="flex items-center gap-4">
+                      <Star className="w-10 h-10" />
+                      <div>
+                        <h3 className="text-2xl font-black">التقييمات</h3>
+                        <p className="text-purple-100 text-sm">إدارة آراء العملاء</p>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
 
+                <div className="mb-6">
+                  <Link href="/admin/marketing" className="block bg-gradient-to-br from-pink-500 to-orange-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
+                    <div className="flex items-center gap-4">
+                      <Gift className="w-10 h-10" />
+                      <div>
+                        <h3 className="text-2xl font-black">التسويق</h3>
+                        <p className="text-pink-100 text-sm">العروض والكوبونات</p>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </>
+            )}
 
             {statsCards.length > 0 && (
-              
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 {statsCards.map((stat, index) => {
                   const Icon = stat.icon;
@@ -584,6 +674,7 @@ export default function AdminDashboard() {
                 })}
               </div>
             )}
+
             {(user?.role === 'admin' || availableStats.includes('totalOrders')) && stats?.recentOrders && stats.recentOrders.length > 0 && (
               <div className={`rounded-2xl p-6 shadow-sm border transition-colors duration-300 ${
                 darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
@@ -702,9 +793,23 @@ export default function AdminDashboard() {
       </div>
 
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-        .font-arabic { font-family: 'Cairo', sans-serif !important; }
-      `}</style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+  .font-arabic { font-family: 'Cairo', sans-serif !important; }
+  
+  /* Fix notification dropdown overflow */
+  header {
+    overflow: visible !important;
+  }
+  
+  header > div {
+    overflow: visible !important;
+  }
+  
+  header .flex {
+    overflow: visible !important;
+  }
+`}</style>
+
     </div>
   );
 }

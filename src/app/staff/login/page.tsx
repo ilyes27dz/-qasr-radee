@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import Logo from '@/components/Logo';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -17,7 +17,6 @@ export default function StaffLoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // تنظيف البيانات قبل الإرسال ✅
     const cleanEmail = email.toLowerCase().trim();
     const cleanPassword = password.trim();
 
@@ -49,12 +48,10 @@ export default function StaffLoginPage() {
       if (data.success && data.user) {
         console.log('✅ نجح تسجيل الدخول!', data.user);
 
-        // حفظ بيانات المستخدم
         localStorage.setItem('admin_user', JSON.stringify(data.user));
         
         toast.success('مرحباً ' + data.user.name + ' 🎉');
 
-        // التوجيه حسب الدور
         setTimeout(() => {
           if (data.user.role === 'admin') {
             router.push('/admin/dashboard');
@@ -75,22 +72,29 @@ export default function StaffLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 p-4 font-arabic">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 p-4 sm:p-6 md:p-8 font-arabic">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <Logo size="medium" />
+            <Image 
+              src="/LOGO.jpg" 
+              alt="قصر الرضيع" 
+              width={120} 
+              height={120}
+              className="w-24 h-24 sm:w-32 sm:h-32"
+              priority
+            />
           </div>
 
-          <h2 className="text-3xl font-black text-center text-gray-900 mb-2">
+          <h2 className="text-2xl sm:text-3xl font-black text-center text-gray-900 mb-2">
             🔐 تسجيل الدخول
           </h2>
-          <p className="text-center text-gray-600 mb-8 text-sm">
+          <p className="text-center text-gray-600 mb-6 sm:mb-8 text-sm">
             للموظفين والإدارة فقط
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">
                 📧 البريد الإلكتروني
@@ -99,7 +103,7 @@ export default function StaffLoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition"
                 placeholder="admin@qsrradi3.com"
                 required
                 autoComplete="email"
@@ -116,7 +120,7 @@ export default function StaffLoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition pr-12"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition pr-10 sm:pr-12"
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
@@ -127,7 +131,7 @@ export default function StaffLoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
               </div>
             </div>
@@ -135,12 +139,12 @@ export default function StaffLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="animate-spin">⏳</span>
-                  جاري تسجيل الدخول...
+                  <span className="text-sm sm:text-base">جاري تسجيل الدخول...</span>
                 </span>
               ) : (
                 '🚀 دخول'
@@ -148,22 +152,11 @@ export default function StaffLoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 sm:mt-6 text-center">
             <a href="/" className="text-blue-600 hover:text-blue-700 font-bold text-sm transition">
               ← العودة للصفحة الرئيسية
             </a>
           </div>
-        </div>
-
-        {/* Debug Info - للاختبار فقط ✅ */}
-        <div className="mt-6 text-center text-white text-sm bg-white/10 backdrop-blur-sm rounded-lg p-4">
-          <p className="font-semibold mb-2">💡 معلومات تسجيل الدخول:</p>
-          <p className="font-mono bg-white/20 px-3 py-1 rounded mb-1">
-            📧 admin@qsrradi3.com
-          </p>
-          <p className="font-mono bg-white/20 px-3 py-1 rounded">
-            🔒 admin123
-          </p>
         </div>
       </div>
 

@@ -4,6 +4,8 @@ import { forwardRef } from 'react';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 import Logo from './Logo';
+import Image from 'next/image';
+
 
 interface InvoicePrintProps {
   order: any;
@@ -51,12 +53,19 @@ const InvoicePrint = forwardRef<HTMLDivElement, InvoicePrintProps>(({ order }, r
       <div className="border-b-4 border-blue-600 pb-6 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Logo size="medium" />
-            <div>
-              <h1 className="text-3xl font-black text-gray-900">قصر الرضيع</h1>
-              <p className="text-sm text-gray-600">Baby Palace Store</p>
-            </div>
-          </div>
+  <Image 
+    src="/LOGO.jpg" 
+    alt="قصر الرضيع" 
+    width={80} 
+    height={80}
+    className="w-20 h-20 rounded-xl"
+  />
+  <div>
+    <h1 className="text-3xl font-black text-gray-900">قصر الرضيع</h1>
+    <p className="text-sm text-gray-600">Baby Palace Store</p>
+  </div>
+</div>
+
           <div className="text-right">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">فاتورة</h2>
             <p className="text-sm text-gray-600">Invoice</p>
@@ -196,8 +205,8 @@ const InvoicePrint = forwardRef<HTMLDivElement, InvoicePrintProps>(({ order }, r
           </div>
           <div className="text-right">
             <p className="font-bold text-gray-900 mb-2">تواصل معنا:</p>
-            <p>الهاتف: +213 555 000 000</p>
-            <p>واتساب: +213 555 000 000</p>
+            <p>الهاتف: +213 558 86 47 55 </p>
+            <p>واتساب: +213 558 86 47 55 </p>
             <p>البريد: info@babypalace.dz</p>
             <p className="mt-3 font-semibold text-blue-600">شكراً لتعاملكم معنا! 💙</p>
           </div>

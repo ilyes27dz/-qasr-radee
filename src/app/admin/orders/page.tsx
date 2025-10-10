@@ -172,7 +172,7 @@ export default function OrdersManagementPage() {
       </head>
       <body>
         <div class="header">
-          <h1>🏰 قصر الرضيع 👶</h1>
+          <h1> قصر الرضيع </h1>
           <p style="color: #6b7280; font-size: 16px;">متجركم الموثوق لملابس وأدوات الأطفال والرضع</p>
         </div>
 
@@ -243,7 +243,7 @@ export default function OrdersManagementPage() {
 
         <div class="footer">
           <p><strong>قصر الرضيع</strong> - جميع الحقوق محفوظة © 2025</p>
-          <p>للاستفسار: info@qasrradee.com | 0555 00 00 00</p>
+          <p>للاستفسار: info@qasrradee.com | 0558 86 47 55 00 00 00</p>
         </div>
 
         <script>
