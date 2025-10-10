@@ -448,30 +448,32 @@ const getProductImage = (images: string[] | undefined) => {
               </h3>
               
               <form 
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  const name = formData.get('name') as string;
-                  const rating = formData.get('rating') as string;
-                  const comment = formData.get('comment') as string;
-                  
-                  fetch('/api/reviews', {
-  method: 'POST',
-  headers: {'Content-Type': 'application/json'},
-  body: JSON.stringify({
-    productId: product.id,
-    customerId: 'guest',
-    rating: parseInt(rating),
-    comment: comment,
-  })
-})
-.then(r => r.json()).then(() => {
-                    toast.success('شكراً! تقييمك قيد المراجعة وسيظهر قريباً ✅');
-                    (e.target as HTMLFormElement).reset();
-                  }).catch(() => toast.error('حدث خطأ'));
-                }}
-                className="space-y-6"
-              >
+  onSubmit={(e) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get('name') as string;
+    const rating = formData.get('rating') as string;
+    const comment = formData.get('comment') as string;
+    
+    fetch('/api/reviews', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        customerName: name,
+        rating: parseInt(rating),
+        comment: comment,
+        productName: product.nameAr,
+      })
+    })
+    .then(r => r.json())
+    .then(() => {
+      toast.success('شكراً! تقييمك قيد المراجعة وسيظهر قريباً ✅');
+      (e.target as HTMLFormElement).reset();
+    })
+    .catch(() => toast.error('حدث خطأ'));
+  }}
+>
+
                 <div>
                   <label className="block text-gray-700 font-bold mb-2">اسمك</label>
                   <input
