@@ -450,7 +450,7 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-5 gap-6">
-<div className="hidden lg:block lg:col-span-1">
+<div className="lg:col-span-1">
             <div className={`rounded-2xl p-4 shadow-sm border sticky top-24 transition-colors duration-300 ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}>
