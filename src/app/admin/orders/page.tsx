@@ -134,131 +134,137 @@ export default function OrdersManagementPage() {
 
   // ✅ طباعة الطلب
   const handlePrint = async (order: any) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) return;
 
-    let qrDataUrl = '';
-    try {
-      qrDataUrl = await QRCode.toDataURL(`https://qasr-radee.vercel.app/orders?number=${order.orderNumber}`);
-    } catch (error) {
-      console.error('QR Error:', error);
-    }
+  let qrDataUrl = '';
+  try {
+    qrDataUrl = await QRCode.toDataURL(`https://qasr-radee.vercel.app/orders?number=${order.orderNumber}`);
+  } catch (error) {
+    console.error('QR Error:', error);
+  }
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html dir="rtl" lang="ar">
-      <head>
-        <meta charset="UTF-8">
-        <title>طلب ${order.orderNumber}</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Cairo', sans-serif; padding: 40px; }
-          .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #2563eb; padding-bottom: 20px; }
-          .header h1 { color: #2563eb; font-size: 32px; margin-bottom: 10px; }
-          .order-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
-          .info-box { background: #f3f4f6; padding: 20px; border-radius: 10px; }
-          .info-box h3 { color: #1f2937; margin-bottom: 15px; font-size: 18px; }
-          .info-row { margin-bottom: 10px; }
-          .info-label { font-weight: 700; color: #4b5563; }
-          .items-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-          .items-table th, .items-table td { border: 1px solid #e5e7eb; padding: 12px; text-align: right; }
-          .items-table th { background: #2563eb; color: white; font-weight: 700; }
-          .total-section { text-align: left; margin-top: 30px; }
-          .total-row { display: flex; justify-content: space-between; padding: 10px; font-size: 18px; }
-          .total-row.final { background: #2563eb; color: white; font-weight: 900; font-size: 24px; padding: 15px; border-radius: 10px; margin-top: 10px; }
-          .qr-section { text-align: center; margin-top: 40px; page-break-inside: avoid; }
-          .footer { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 2px solid #e5e7eb; color: #6b7280; }
-          @media print { body { padding: 20px; } }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>قصر الرضيع</h1>
-          <p style="color: #6b7280; font-size: 16px;">متجركم الموثوق لملابس وأدوات الأطفال والرضع</p>
+  // ✅ إضافة نوع التوصيل
+  const deliveryTypeText = order.deliveryType === 'home' ? '🏠 توصيل للمنزل' : '🏢 توصيل للمكتب';
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>طلب ${order.orderNumber}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; padding: 40px; }
+        .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #2563eb; padding-bottom: 20px; }
+        .header h1 { color: #2563eb; font-size: 32px; margin-bottom: 10px; }
+        .order-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .info-box { background: #f3f4f6; padding: 20px; border-radius: 10px; }
+        .info-box h3 { color: #1f2937; margin-bottom: 15px; font-size: 18px; }
+        .info-row { margin-bottom: 10px; }
+        .info-label { font-weight: 700; color: #4b5563; }
+        .items-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+        .items-table th, .items-table td { border: 1px solid #e5e7eb; padding: 12px; text-align: right; }
+        .items-table th { background: #2563eb; color: white; font-weight: 700; }
+        .total-section { text-align: left; margin-top: 30px; }
+        .total-row { display: flex; justify-content: space-between; padding: 10px; font-size: 18px; }
+        .total-row.final { background: #2563eb; color: white; font-weight: 900; font-size: 24px; padding: 15px; border-radius: 10px; margin-top: 10px; }
+        .delivery-type { background: #10b981; color: white; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 700; margin: 20px 0; }
+        .qr-section { text-align: center; margin-top: 40px; page-break-inside: avoid; }
+        .footer { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 2px solid #e5e7eb; color: #6b7280; }
+        @media print { body { padding: 20px; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>قصر الرضيع</h1>
+        <p style="color: #6b7280; font-size: 16px;">متجركم الموثوق لملابس وأدوات الأطفال والرضع</p>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="color: #1f2937; font-size: 24px;">فاتورة طلب رقم: ${order.orderNumber}</h2>
+        <p style="color: #6b7280;">التاريخ: ${new Date(order.createdAt).toLocaleDateString('ar-DZ', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
+
+      ${order.deliveryType ? `<div class="delivery-type">${deliveryTypeText}</div>` : ''}
+
+      <div class="order-info">
+        <div class="info-box">
+          <h3>📋 معلومات العميل</h3>
+          <div class="info-row"><span class="info-label">الاسم:</span> ${order.customerName}</div>
+          <div class="info-row"><span class="info-label">الهاتف:</span> ${order.customerPhone}</div>
+          ${order.customerEmail ? `<div class="info-row"><span class="info-label">البريد:</span> ${order.customerEmail}</div>` : ''}
         </div>
 
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h2 style="color: #1f2937; font-size: 24px;">فاتورة طلب رقم: ${order.orderNumber}</h2>
-          <p style="color: #6b7280;">التاريخ: ${new Date(order.createdAt).toLocaleDateString('ar-DZ', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <div class="info-box">
+          <h3>📍 عنوان التسليم</h3>
+          <div class="info-row"><span class="info-label">الولاية:</span> ${order.wilaya}</div>
+          <div class="info-row"><span class="info-label">البلدية:</span> ${order.commune}</div>
+          <div class="info-row"><span class="info-label">العنوان:</span> ${order.address}</div>
         </div>
+      </div>
 
-        <div class="order-info">
-          <div class="info-box">
-            <h3>📋 معلومات العميل</h3>
-            <div class="info-row"><span class="info-label">الاسم:</span> ${order.customerName}</div>
-            <div class="info-row"><span class="info-label">الهاتف:</span> ${order.customerPhone}</div>
-            ${order.customerEmail ? `<div class="info-row"><span class="info-label">البريد:</span> ${order.customerEmail}</div>` : ''}
-          </div>
-
-          <div class="info-box">
-            <h3>📍 عنوان التسليم</h3>
-            <div class="info-row"><span class="info-label">الولاية:</span> ${order.wilaya}</div>
-            <div class="info-row"><span class="info-label">البلدية:</span> ${order.commune}</div>
-            <div class="info-row"><span class="info-label">العنوان:</span> ${order.address}</div>
-          </div>
-        </div>
-
-        <table class="items-table">
-          <thead>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>المنتج</th>
+            <th>السعر</th>
+            <th>الكمية</th>
+            <th>المجموع</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${order.items?.map((item: any) => `
             <tr>
-              <th>المنتج</th>
-              <th>السعر</th>
-              <th>الكمية</th>
-              <th>المجموع</th>
+              <td>${item.productName}</td>
+              <td>${item.price.toLocaleString()} دج</td>
+              <td>${item.quantity}</td>
+              <td>${(item.price * item.quantity).toLocaleString()} دج</td>
             </tr>
-          </thead>
-          <tbody>
-            ${order.items?.map((item: any) => `
-              <tr>
-                <td>${item.productName}</td>
-                <td>${item.price.toLocaleString()} دج</td>
-                <td>${item.quantity}</td>
-                <td>${(item.price * item.quantity).toLocaleString()} دج</td>
-              </tr>
-            `).join('') || ''}
-          </tbody>
-        </table>
+          `).join('') || ''}
+        </tbody>
+      </table>
 
-        <div class="total-section">
-          <div class="total-row">
-            <span>المجموع الفرعي:</span>
-            <span>${order.subtotal?.toLocaleString() || 0} دج</span>
-          </div>
-          <div class="total-row">
-            <span>الشحن:</span>
-            <span>${order.shippingCost?.toLocaleString() || 0} دج</span>
-          </div>
-          <div class="total-row final">
-            <span>المجموع الكلي:</span>
-            <span>${order.total?.toLocaleString() || 0} دج</span>
-          </div>
+      <div class="total-section">
+        <div class="total-row">
+          <span>المجموع الفرعي:</span>
+          <span>${order.subtotal?.toLocaleString() || 0} دج</span>
         </div>
-
-        ${qrDataUrl ? `
-          <div class="qr-section">
-            <h3 style="margin-bottom: 15px;">تتبع طلبك</h3>
-            <img src="${qrDataUrl}" alt="QR Code" style="width: 150px; height: 150px;">
-            <p style="margin-top: 10px; color: #6b7280;">امسح الكود لتتبع طلبك</p>
-          </div>
-        ` : ''}
-
-        <div class="footer">
-          <p><strong>قصر الرضيع</strong> - جميع الحقوق محفوظة © 2025</p>
-          <p>للاستفسار: info@qasrradee.com | 0558 86 47 55</p>
+        <div class="total-row">
+          <span>الشحن (${deliveryTypeText}):</span>
+          <span>${order.shippingCost?.toLocaleString() || 0} دج</span>
         </div>
+        <div class="total-row final">
+          <span>المجموع الكلي:</span>
+          <span>${order.total?.toLocaleString() || 0} دج</span>
+        </div>
+      </div>
 
-        <script>
-          window.onload = () => {
-            window.print();
-          };
-        </script>
-      </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
-  };
+      ${qrDataUrl ? `
+        <div class="qr-section">
+          <h3 style="margin-bottom: 15px;">تتبع طلبك</h3>
+          <img src="${qrDataUrl}" alt="QR Code" style="width: 150px; height: 150px;">
+          <p style="margin-top: 10px; color: #6b7280;">امسح الكود لتتبع طلبك</p>
+        </div>
+      ` : ''}
+
+      <div class="footer">
+        <p><strong>قصر الرضيع</strong> - جميع الحقوق محفوظة © 2025</p>
+        <p>للاستفسار: info@qasrradee.com | 0558 86 47 55</p>
+      </div>
+
+      <script>
+        window.onload = () => {
+          window.print();
+        };
+      </script>
+    </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+};
 
   // ✅ عرض تفاصيل الطلب في Modal
   const handleViewDetails = async (order: any) => {

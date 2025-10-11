@@ -3,13 +3,24 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Truck, CheckCircle, Heart, ShoppingCart, Sparkles } from 'lucide-react';
+import { CreditCard, Truck, CheckCircle, Heart, ShoppingCart, Sparkles, Home as HomeIcon, Building2 } from 'lucide-react';
 import { useCart } from '@/components/CartContext';
 import { useWishlist } from '@/components/WishlistContext';
-import { formatPrice, ALGERIAN_WILAYAS } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
 import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 import toast from 'react-hot-toast';
+
+// ✅ نموذج البيانات
+interface AlgeriaCity {
+  id: number;
+  commune_name: string;
+  commune_name_ascii: string;
+  daira_name: string;
+  wilaya_code: string;
+  wilaya_name: string;
+  wilaya_name_ascii: string;
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -18,20 +29,19 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
 
+  // ✅ بيانات الجزائر
+  const [algeriaData, setAlgeriaData] = useState<AlgeriaCity[]>([]);
+  const [wilayas, setWilayas] = useState<string[]>([]);
+  const [communes, setCommunes] = useState<string[]>([]);
+  const [deliveryType, setDeliveryType] = useState<'home' | 'office'>('home');
+
+  // ✅ الأسعار من API
+  const [shippingPrices, setShippingPrices] = useState<any>({});
+
+  // ✅ الكوبون
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponLoading, setCouponLoading] = useState(false);
-
-  useEffect(() => {
-    try {
-      const userData = localStorage.getItem('customer_user');
-      if (userData) {
-        setUser(JSON.parse(userData));
-      }
-    } catch (error) {
-      console.error('Error loading user:', error);
-    }
-  }, []);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -44,7 +54,83 @@ export default function CheckoutPage() {
     notes: '',
   });
 
-  const shippingCost = 500;
+  // ✅ تحميل البيانات عند بدء الصفحة
+  useEffect(() => {
+    // تحميل بيانات المستخدم
+    try {
+      const userData = localStorage.getItem('customer_user');
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+    } catch (error) {
+      console.error('Error loading user:', error);
+    }
+
+    // ✅ تحميل بيانات الجزائر
+    loadAlgeriaData();
+
+    // ✅ تحميل الأسعار من API
+    loadShippingPrices();
+  }, []);
+
+  // ✅ تحميل ملف JSON
+  const loadAlgeriaData = async () => {
+    try {
+      const response = await fetch('/algeria_cities.json');
+      const data: AlgeriaCity[] = await response.json();
+      
+      setAlgeriaData(data);
+      
+      // ✅ استخراج الولايات الفريدة وترتيبها أبجدياً
+      const uniqueWilayas = [...new Set(data.map(item => item.wilaya_name))]
+        .sort((a, b) => a.localeCompare(b, 'ar'));
+      setWilayas(uniqueWilayas);
+      
+      console.log('✅ تم تحميل', data.length, 'بلدية');
+    } catch (error) {
+      console.error('❌ فشل تحميل البيانات:', error);
+      toast.error('فشل تحميل بيانات الولايات');
+    }
+  };
+
+  // ✅ تحميل الأسعار من API
+  const loadShippingPrices = async () => {
+    try {
+      const response = await fetch('/api/shipping-prices');
+      const data = await response.json();
+      
+      const pricesMap: any = {};
+      data.forEach((item: any) => {
+        pricesMap[item.wilayaName] = {
+          home: item.homePrice,
+          office: item.officePrice
+        };
+      });
+      
+      setShippingPrices(pricesMap);
+      console.log('✅ تم تحميل أسعار الشحن من API');
+    } catch (error) {
+      console.error('❌ Error loading prices:', error);
+      toast.error('فشل تحميل أسعار الشحن');
+    }
+  };
+
+  // ✅ حساب تكلفة الشحن من API
+  const calculateShippingCost = (): number => {
+    if (!formData.wilaya) return 500;
+
+    // ✅ جلب من state تم تحميله من API
+    const wilayaPrice = shippingPrices[formData.wilaya];
+    
+    if (wilayaPrice) {
+      return deliveryType === 'home' ? wilayaPrice.home : wilayaPrice.office;
+    }
+
+    // السعر الافتراضي إذا لم يوجد
+    return deliveryType === 'home' ? 600 : 500;
+  };
+
+  const shippingCost = calculateShippingCost();
   const cartTotal = getCartTotal();
 
   const discount = appliedCoupon 
@@ -55,6 +141,7 @@ export default function CheckoutPage() {
 
   const total = cartTotal + shippingCost - discount;
 
+  // ✅ تطبيق الكوبون
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
       toast.error('أدخل كود الكوبون');
@@ -91,6 +178,7 @@ export default function CheckoutPage() {
     toast.success('تم إلغاء الكوبون');
   };
 
+  // ✅ إرسال الطلب
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -114,6 +202,7 @@ export default function CheckoutPage() {
           commune: formData.commune,
           notes: formData.notes,
           paymentMethod: formData.paymentMethod,
+          deliveryType: deliveryType,
           subtotal: cartTotal,
           shippingCost: shippingCost,
           discount: discount,
@@ -145,11 +234,25 @@ export default function CheckoutPage() {
     }
   };
 
+  // ✅ معالجة تغيير الحقول
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // ✅ عند تغيير الولاية، حمّل البلديات مرتبة
+    if (name === 'wilaya' && value) {
+      const wilayaCommunes = algeriaData
+        .filter(item => item.wilaya_name === value)
+        .map(item => item.commune_name)
+        .sort((a, b) => a.localeCompare(b, 'ar'));
+      
+      setCommunes(wilayaCommunes);
+      setFormData(prev => ({ ...prev, commune: '' }));
+    }
   };
 
   if (cartItems.length === 0) {
@@ -290,7 +393,7 @@ export default function CheckoutPage() {
                       required
                     >
                       <option value="">اختر الولاية</option>
-                      {ALGERIAN_WILAYAS.map((wilaya) => (
+                      {wilayas.map((wilaya) => (
                         <option key={wilaya} value={wilaya}>
                           {wilaya}
                         </option>
@@ -300,15 +403,72 @@ export default function CheckoutPage() {
 
                   <div>
                     <label className="block text-gray-700 mb-2 md:mb-3 font-bold text-sm md:text-lg">البلدية *</label>
-                    <input
-                      type="text"
+                    <select
                       name="commune"
                       value={formData.commune}
                       onChange={handleChange}
-                      className="w-full px-3 md:px-5 py-2 md:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition text-sm md:text-lg"
-                      placeholder="أدخل اسم البلدية"
+                      className="w-full px-3 md:px-5 py-2 md:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition text-sm md:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       required
-                    />
+                      disabled={!formData.wilaya}
+                    >
+                      <option value="">اختر البلدية</option>
+                      {communes.map((commune) => (
+                        <option key={commune} value={commune}>
+                          {commune}
+                        </option>
+                      ))}
+                    </select>
+                    {!formData.wilaya && (
+                      <p className="text-xs text-gray-500 mt-1">اختر الولاية أولاً</p>
+                    )}
+                  </div>
+
+                  {/* ✅ نوع التوصيل */}
+                  <div className="md:col-span-2">
+                    <label className="block text-gray-700 mb-3 font-bold text-sm md:text-lg">
+                      نوع التوصيل *
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition ${
+                        deliveryType === 'home' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="deliveryType"
+                          value="home"
+                          checked={deliveryType === 'home'}
+                          onChange={(e) => setDeliveryType('home')}
+                          className="w-4 h-4"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <HomeIcon className="w-5 h-5 text-blue-600" />
+                            <p className="font-bold text-gray-900 text-sm md:text-base">توصيل للمنزل</p>
+                          </div>
+                          <p className="text-xs text-gray-500">حسب الولاية</p>
+                        </div>
+                      </label>
+                      
+                      <label className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition ${
+                        deliveryType === 'office' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="deliveryType"
+                          value="office"
+                          checked={deliveryType === 'office'}
+                          onChange={(e) => setDeliveryType('office')}
+                          className="w-4 h-4"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-blue-600" />
+                            <p className="font-bold text-gray-900 text-sm md:text-base">توصيل للمكتب</p>
+                          </div>
+                          <p className="text-xs text-gray-500">حسب الولاية</p>
+                        </div>
+                      </label>
+                    </div>
                   </div>
 
                   <div className="md:col-span-2">
@@ -461,7 +621,12 @@ export default function CheckoutPage() {
                     <span className="font-black">{formatPrice(cartTotal)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600 text-sm md:text-lg">
-                    <span className="font-semibold">تكلفة الشحن</span>
+                    <div className="flex flex-col">
+                      <span className="font-semibold">تكلفة الشحن</span>
+                      <span className="text-xs text-gray-500">
+                        {formData.wilaya || 'اختر الولاية'} • {deliveryType === 'home' ? 'منزل' : 'مكتب'}
+                      </span>
+                    </div>
                     <span className="font-black">{formatPrice(shippingCost)}</span>
                   </div>
                   

@@ -51,6 +51,8 @@ model Order {
   address       String
   notes         String?
   
+  deliveryType  String      @default("office") // ✅ جديد: home أو office
+  
   status        String      @default("pending")
   paymentMethod String      @default("cash_on_delivery")
   priority      String      @default("medium")
@@ -236,7 +238,7 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
-// رسائل اتصل بنا - جديد ✅
+// رسائل اتصل بنا
 model ContactMessage {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -247,4 +249,17 @@ model ContactMessage {
   createdAt DateTime @default(now())
   repliedAt DateTime?
   reply     String?
+}
+
+// ✅ أسعار الشحن - جديد
+model ShippingPrice {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  wilayaCode   Int      @unique // رمز الولاية (01-58)
+  wilayaName   String   // اسم الولاية
+  homePrice    Int      // سعر التوصيل للمنزل
+  officePrice  Int      // سعر التوصيل للمكتب
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("shipping_prices")
 }

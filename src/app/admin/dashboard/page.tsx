@@ -9,8 +9,10 @@ import {
   LayoutDashboard, Package, ShoppingCart, Users, Settings, 
   DollarSign, LogOut, Home, RefreshCw, FileText,
   BarChart3, UserCog, ArrowUpRight, Bell,
-  Moon, Sun, Download, Link2, Star, Gift, Menu, X, MessageSquare
+  Moon, Sun, Download, Link2, Star, Gift, Menu, X, MessageSquare,
+  Truck // ✅ إضافة هذا
 } from 'lucide-react';
+
 
 
 import NotificationBell from '@/components/NotificationBell';
@@ -619,45 +621,61 @@ export default function AdminDashboard() {
             </div>
 
           {user?.role === 'admin' && (
-  <>
-    {/* كارت رسائل العملاء - جديد ✅ */}
-    <div className="mb-6">
-      <Link href="/admin/messages" className="block bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
-        <div className="flex items-center gap-4">
-          <MessageSquare className="w-10 h-10" />
-          <div>
-            <h3 className="text-2xl font-black">رسائل العملاء</h3>
-            <p className="text-blue-100 text-sm">رسائل اتصل بنا</p>
-          </div>
+  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    {/* كارت إدارة الشحن */}
+    <Link href="/admin/shipping" className="block bg-white rounded-xl p-5 hover:shadow-lg transition border-2 border-green-200 group">
+      <div className="flex flex-col items-center text-center gap-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+          <Truck className="w-6 h-6 text-white" />
         </div>
-      </Link>
-    </div>
+        <div>
+          <h3 className="font-black text-gray-900">أسعار الشحن</h3>
+          <p className="text-gray-500 text-xs">إدارة التوصيل</p>
+        </div>
+      </div>
+    </Link>
 
-    <div className="mb-6">
-      <Link href="/admin/reviews" className="block bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
-        <div className="flex items-center gap-4">
-          <Star className="w-10 h-10" />
-          <div>
-            <h3 className="text-2xl font-black">التقييمات</h3>
-            <p className="text-purple-100 text-sm">إدارة آراء العملاء</p>
-          </div>
+    {/* كارت رسائل العملاء */}
+    <Link href="/admin/messages" className="block bg-white rounded-xl p-5 hover:shadow-lg transition border-2 border-blue-200 group">
+      <div className="flex flex-col items-center text-center gap-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+          <MessageSquare className="w-6 h-6 text-white" />
         </div>
-      </Link>
-    </div>
+        <div>
+          <h3 className="font-black text-gray-900">رسائل العملاء</h3>
+          <p className="text-gray-500 text-xs">اتصل بنا</p>
+        </div>
+      </div>
+    </Link>
 
-    <div className="mb-6">
-      <Link href="/admin/marketing" className="block bg-gradient-to-br from-pink-500 to-orange-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
-        <div className="flex items-center gap-4">
-          <Gift className="w-10 h-10" />
-          <div>
-            <h3 className="text-2xl font-black">التسويق</h3>
-            <p className="text-pink-100 text-sm">العروض والكوبونات</p>
-          </div>
+    {/* كارت التقييمات */}
+    <Link href="/admin/reviews" className="block bg-white rounded-xl p-5 hover:shadow-lg transition border-2 border-purple-200 group">
+      <div className="flex flex-col items-center text-center gap-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+          <Star className="w-6 h-6 text-white" />
         </div>
-      </Link>
-    </div>
-  </>
+        <div>
+          <h3 className="font-black text-gray-900">التقييمات</h3>
+          <p className="text-gray-500 text-xs">آراء العملاء</p>
+        </div>
+      </div>
+    </Link>
+
+    {/* كارت التسويق */}
+    <Link href="/admin/marketing" className="block bg-white rounded-xl p-5 hover:shadow-lg transition border-2 border-pink-200 group">
+      <div className="flex flex-col items-center text-center gap-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-orange-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+          <Gift className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h3 className="font-black text-gray-900">التسويق</h3>
+          <p className="text-gray-500 text-xs">العروض</p>
+        </div>
+      </div>
+    </Link>
+  </div>
 )}
+
 
 
             {statsCards.length > 0 && (
