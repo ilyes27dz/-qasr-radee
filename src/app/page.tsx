@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Search, Heart, Star, Truck, Shield, Phone, MessageCircle, Facebook, X, CreditCard } from 'lucide-react';
+import { ShoppingCart, Search, Heart, Star, Truck, Shield, Phone, MessageCircle, Facebook, X, CreditCard, Menu } from 'lucide-react';
 import { useCart } from '@/components/CartContext';
 import { useWishlist } from '@/components/WishlistContext';
 import TopBanner from '@/components/TopBanner';
@@ -15,9 +15,6 @@ import Footer from '@/components/Footer';
 import toast from 'react-hot-toast';
 import { CONTACT_INFO } from '@/lib/constants';
 
-import ProductReviewsList from '@/components/ProductReviewsList';
-
-
 export default function HomePage() {
   const { addToCart, getCartCount } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist, getWishlistCount } = useWishlist();
@@ -27,6 +24,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [bestSellers, setBestSellers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const categories = [
     { title: 'للتغذية', icon: '🍼', count: 15 },
@@ -44,7 +42,7 @@ export default function HomePage() {
   const fetchFeaturedProducts = async () => {
     setLoading(true);
     try {
-const response = await fetch('/api/products?sort=sales&limit=6');
+      const response = await fetch('/api/products?sort=sales&limit=6');
       
       if (!response.ok) {
         throw new Error('Failed to fetch products');
@@ -55,7 +53,7 @@ const response = await fetch('/api/products?sort=sales&limit=6');
       console.log('✅ Featured products loaded:', data);
       
       if (Array.isArray(data) && data.length > 0) {
-setBestSellers(data.slice(0, 3));
+        setBestSellers(data.slice(0, 3));
       } else {
         console.log('⚠️ No featured products found');
         setBestSellers([]);
@@ -94,18 +92,18 @@ setBestSellers(data.slice(0, 3));
     }
   };
 
-const getProductImage = (images: string[]) => {
-  if (!images || images.length === 0) return null;
-  
-  const validImage = images.find(img => {
-    if (!img || img === 'placeholder.jpg') return false;
-    return img.startsWith('/uploads/') || 
-           img.startsWith('https://res.cloudinary.com/') ||
-           img.startsWith('http');
-  });
-  
-  return validImage || null;
-};
+  const getProductImage = (images: string[]) => {
+    if (!images || images.length === 0) return null;
+    
+    const validImage = images.find(img => {
+      if (!img || img === 'placeholder.jpg') return false;
+      return img.startsWith('/uploads/') || 
+             img.startsWith('https://res.cloudinary.com/') ||
+             img.startsWith('http');
+    });
+    
+    return validImage || null;
+  };
 
   const getProductIcon = (categoryId: string) => {
     const icons: any = {
@@ -127,34 +125,42 @@ const getProductImage = (images: string[]) => {
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-  {/* الشعار على اليمين ✅ */}
-  <Link href="/" className="order-1">
-    <Logo size="small" variant="text" />
-  </Link>
+            {/* Logo */}
+            <Link href="/" className="order-1">
+              <Logo size="small" variant="text" />
+            </Link>
 
-  {/* الأيقونات على اليسار ✅ */}
-  <div className="flex items-center gap-3 order-2">
-    <UserMenu />
-    <button onClick={() => window.location.href = '/wishlist'} className="relative p-2 hover:bg-gray-100 rounded-lg transition">
-      <Heart className="w-5 h-5 text-gray-600" />
-      {getWishlistCount() > 0 && (
-        <span className="absolute -top-1 -left-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-bold">
-          {getWishlistCount()}
-        </span>
-      )}
-    </button>
-    <Link href="/cart" className="relative p-2 hover:bg-gray-100 rounded-lg transition">
-      <ShoppingCart className="w-5 h-5 text-gray-600" />
-      {getCartCount() > 0 && (
-        <span className="absolute -top-1 -left-1 bg-blue-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-bold">
-          {getCartCount()}
-        </span>
-      )}
-    </Link>
-  </div>
-</div>
+            {/* Icons */}
+            <div className="flex items-center gap-3 order-2">
+              {/* ✅ Mobile Menu Button */}
+              <button 
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <Menu className="w-6 h-6 text-gray-600" />
+              </button>
 
+              <UserMenu />
+              <button onClick={() => window.location.href = '/wishlist'} className="relative p-2 hover:bg-gray-100 rounded-lg transition">
+                <Heart className="w-5 h-5 text-gray-600" />
+                {getWishlistCount() > 0 && (
+                  <span className="absolute -top-1 -left-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                    {getWishlistCount()}
+                  </span>
+                )}
+              </button>
+              <Link href="/cart" className="relative p-2 hover:bg-gray-100 rounded-lg transition">
+                <ShoppingCart className="w-5 h-5 text-gray-600" />
+                {getCartCount() > 0 && (
+                  <span className="absolute -top-1 -left-1 bg-blue-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                    {getCartCount()}
+                  </span>
+                )}
+              </Link>
+            </div>
+          </div>
 
+          {/* Search Bar */}
           <div className="mt-4 relative">
             <form onSubmit={handleSearch}>
               <input
@@ -170,10 +176,10 @@ const getProductImage = (images: string[]) => {
             </form>
           </div>
 
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex gap-8 mt-4 justify-center text-base font-bold">
             <Link href="/" className="text-blue-600 hover:text-blue-700 transition">الرئيسية</Link>
             <Link href="/products" className="text-gray-700 hover:text-blue-600 transition">المنتجات</Link>
-            
             <button 
               onClick={() => {
                 const section = document.getElementById('categories-section');
@@ -183,15 +189,73 @@ const getProductImage = (images: string[]) => {
             >
               الأقسام
             </button>
-            
             <Link href="/orders/track" className="text-gray-700 hover:text-blue-600 transition">
               تتبع الطلب
             </Link>
-            
             <Link href="/offers" className="text-gray-700 hover:text-blue-600 transition">العروض</Link>
             <Link href="/about" className="text-gray-700 hover:text-blue-600 transition">من نحن</Link>
             <Link href="/contact" className="text-gray-700 hover:text-blue-600 transition">اتصل بنا</Link>
           </nav>
+
+          {/* ✅ Mobile Menu */}
+          {showMobileMenu && (
+            <div className="md:hidden mt-4 py-4 border-t border-gray-200">
+              <nav className="flex flex-col gap-3">
+                <Link 
+                  href="/" 
+                  onClick={() => setShowMobileMenu(false)}
+                  className="text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition font-bold"
+                >
+                  🏠 الرئيسية
+                </Link>
+                <Link 
+                  href="/products" 
+                  onClick={() => setShowMobileMenu(false)}
+                  className="text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg transition font-bold"
+                >
+                  📦 المنتجات
+                </Link>
+                <button 
+                  onClick={() => {
+                    const section = document.getElementById('categories-section');
+                    section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    setShowMobileMenu(false);
+                  }}
+                  className="text-right text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg transition font-bold"
+                >
+                  📂 الأقسام
+                </button>
+                <Link 
+                  href="/orders/track" 
+                  onClick={() => setShowMobileMenu(false)}
+                  className="text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg transition font-bold"
+                >
+                  📍 تتبع الطلب
+                </Link>
+                <Link 
+                  href="/offers" 
+                  onClick={() => setShowMobileMenu(false)}
+                  className="text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg transition font-bold"
+                >
+                  🎁 العروض
+                </Link>
+                <Link 
+                  href="/about" 
+                  onClick={() => setShowMobileMenu(false)}
+                  className="text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg transition font-bold"
+                >
+                  ℹ️ من نحن
+                </Link>
+                <Link 
+                  href="/contact" 
+                  onClick={() => setShowMobileMenu(false)}
+                  className="text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg transition font-bold"
+                >
+                  📞 اتصل بنا
+                </Link>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
@@ -317,6 +381,7 @@ const getProductImage = (images: string[]) => {
           )}
         </div>
       </section>
+
       {/* Categories */}
       <section id="categories-section" className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -394,7 +459,7 @@ const getProductImage = (images: string[]) => {
         {showContactMenu && (
           <div className="absolute bottom-16 left-0 bg-white rounded-xl shadow-xl p-3 space-y-2 w-48">
             <a
-  href={`https://wa.me/${CONTACT_INFO.whatsapp}`}
+              href={`https://wa.me/${CONTACT_INFO.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition text-sm font-medium"
