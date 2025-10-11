@@ -3,13 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+
 import Image from 'next/image';
 import { 
   LayoutDashboard, Package, ShoppingCart, Users, Settings, 
   DollarSign, LogOut, Home, RefreshCw, FileText,
   BarChart3, UserCog, ArrowUpRight, Bell,
-  Moon, Sun, Download, Link2, Star, Gift, Menu, X
+  Moon, Sun, Download, Link2, Star, Gift, Menu, X, MessageSquare
 } from 'lucide-react';
+
+
 import NotificationBell from '@/components/NotificationBell';
 import toast from 'react-hot-toast';
 import { getAvailablePages, getAvailableStats } from '@/lib/permissions';
@@ -314,6 +317,7 @@ export default function AdminDashboard() {
               </button>
 
               {user?.role === 'admin' && (
+                
                 <div className="relative">
                   <button
                     onClick={() => setShowStaffLinks(!showStaffLinks)}
@@ -611,33 +615,47 @@ export default function AdminDashboard() {
               </p>
             </div>
 
-            {user?.role === 'admin' && (
-              <>
-                <div className="mb-6">
-                  <Link href="/admin/reviews" className="block bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
-                    <div className="flex items-center gap-4">
-                      <Star className="w-10 h-10" />
-                      <div>
-                        <h3 className="text-2xl font-black">التقييمات</h3>
-                        <p className="text-purple-100 text-sm">إدارة آراء العملاء</p>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
+          {user?.role === 'admin' && (
+  <>
+    {/* كارت رسائل العملاء - جديد ✅ */}
+    <div className="mb-6">
+      <Link href="/admin/messages" className="block bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
+        <div className="flex items-center gap-4">
+          <MessageSquare className="w-10 h-10" />
+          <div>
+            <h3 className="text-2xl font-black">رسائل العملاء</h3>
+            <p className="text-blue-100 text-sm">رسائل اتصل بنا</p>
+          </div>
+        </div>
+      </Link>
+    </div>
 
-                <div className="mb-6">
-                  <Link href="/admin/marketing" className="block bg-gradient-to-br from-pink-500 to-orange-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
-                    <div className="flex items-center gap-4">
-                      <Gift className="w-10 h-10" />
-                      <div>
-                        <h3 className="text-2xl font-black">التسويق</h3>
-                        <p className="text-pink-100 text-sm">العروض والكوبونات</p>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              </>
-            )}
+    <div className="mb-6">
+      <Link href="/admin/reviews" className="block bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
+        <div className="flex items-center gap-4">
+          <Star className="w-10 h-10" />
+          <div>
+            <h3 className="text-2xl font-black">التقييمات</h3>
+            <p className="text-purple-100 text-sm">إدارة آراء العملاء</p>
+          </div>
+        </div>
+      </Link>
+    </div>
+
+    <div className="mb-6">
+      <Link href="/admin/marketing" className="block bg-gradient-to-br from-pink-500 to-orange-600 text-white rounded-2xl p-6 hover:shadow-xl transition">
+        <div className="flex items-center gap-4">
+          <Gift className="w-10 h-10" />
+          <div>
+            <h3 className="text-2xl font-black">التسويق</h3>
+            <p className="text-pink-100 text-sm">العروض والكوبونات</p>
+          </div>
+        </div>
+      </Link>
+    </div>
+  </>
+)}
+
 
             {statsCards.length > 0 && (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">

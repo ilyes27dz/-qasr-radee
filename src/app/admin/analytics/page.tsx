@@ -323,27 +323,35 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* إحصائيات Google Analytics المباشرة - جديد */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border mb-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-blue-600" />
-            إحصائيات الزوار المباشرة من Google Analytics
-          </h3>
+        {/* إحصائيات Google Analytics - محسّنة وأكبر */}
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-blue-100 mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+            <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+              <BarChart3 className="w-8 h-8" />
+              إحصائيات الزوار المباشرة من Google Analytics
+            </h3>
+          </div>
           
-          <div className="bg-gray-50 rounded-lg overflow-hidden border-2 border-gray-200">
+          <div className="relative w-full bg-gray-50">
             <iframe
               src="https://lookerstudio.google.com/embed/reporting/3e5475a1-7f9a-4b08-8e9a-89ee5e57d52b/page/EWMbF"
               className="w-full"
-              style={{ height: '800px', border: 0 }}
+              style={{ height: '1600px', border: 0, display: 'block' }}
               allowFullScreen
+              sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
             />
           </div>
           
-          <div className="mt-4 flex items-center gap-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
-            البيانات محدثة تلقائياً من Google Analytics (يتم التحديث كل ساعة)
+          <div className="px-6 py-4 bg-blue-50 border-t-2 border-blue-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900">البيانات محدثة تلقائياً</p>
+                <p className="text-xs text-gray-600">يتم تحديث الإحصائيات كل ساعة من Google Analytics</p>
+              </div>
+            </div>
           </div>
         </div>
 

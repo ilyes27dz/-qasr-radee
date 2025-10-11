@@ -178,18 +178,6 @@ model Banner {
   updatedAt DateTime @updatedAt
 }
 
-model ContactMessage {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String
-  phone     String
-  subject   String
-  message   String
-  status    String   @default("unread")
-  
-  createdAt DateTime @default(now())
-}
-
 // كوبونات الخصم
 model Coupon {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -237,7 +225,7 @@ model Offer {
   updatedAt   DateTime @updatedAt
 }
 
-// الإشعارات ✅ جديد
+// الإشعارات
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   type      String   // "order", "review", "contact"
@@ -246,4 +234,17 @@ model Notification {
   link      String?
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// رسائل اتصل بنا - جديد ✅
+model ContactMessage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  phone     String?
+  message   String
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+  repliedAt DateTime?
+  reply     String?
 }
