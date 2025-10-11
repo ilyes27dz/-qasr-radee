@@ -7,7 +7,7 @@ import {
   Package, Eye, Search, RefreshCw, LogOut, Home,
   Clock, CheckCircle, Truck, XCircle,
   DollarSign, Phone, MapPin, Calendar, Printer,
-  Trash2, Edit, X
+  Trash2, Edit, X, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
@@ -31,8 +31,13 @@ export default function OrdersManagementPage() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [hasFetched, setHasFetched] = useState(false); // ✅ لمنع التكرار
+  const [currentPage, setCurrentPage] = useState(1); // ✅ الترقيم
+  const itemsPerPage = 10; // ✅ عدد الطلبات بالصفحة
 
   useEffect(() => {
+    if (hasFetched) return; // ✅ منع التكرار
+
     const adminUser = localStorage.getItem('admin_user');
     if (!adminUser) {
       router.push('/staff/login');
@@ -49,7 +54,8 @@ export default function OrdersManagementPage() {
     }
 
     fetchOrders();
-  }, []);
+    setHasFetched(true); // ✅ تسجيل أنه تم التحميل
+  }, [hasFetched]);
 
   // ✅ جلب من MongoDB
   const fetchOrders = async () => {
@@ -71,10 +77,7 @@ export default function OrdersManagementPage() {
       
       setOrders(sortedOrders);
       setFilteredOrders(sortedOrders);
-      
-      if (sortedOrders.length > 0) {
-        toast.success(`تم تحميل ${sortedOrders.length} طلب ✅`);
-      }
+
     } catch (error) {
       console.error('❌ Error loading orders:', error);
       toast.error('فشل تحميل الطلبات');
@@ -98,8 +101,8 @@ export default function OrdersManagementPage() {
         throw new Error('Failed to update status');
       }
 
-      toast.success('تم تحديث الحالة بنجاح ✅');
-      fetchOrders(); // إعادة تحميل الطلبات
+      toast.success('تم تحديث الحالة بنجاح ✅', { duration: 1000 });
+      fetchOrders();
     } catch (error) {
       console.error('❌ Error updating status:', error);
       toast.error('فشل تحديث الحالة');
@@ -121,7 +124,7 @@ export default function OrdersManagementPage() {
         throw new Error('Failed to delete order');
       }
 
-      toast.success('تم حذف الطلب بنجاح ✅');
+      toast.success('تم حذف الطلب بنجاح ✅', { duration: 1000 });
       fetchOrders();
     } catch (error) {
       console.error('❌ Error deleting order:', error);
@@ -134,7 +137,6 @@ export default function OrdersManagementPage() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    // توليد QR Code
     let qrDataUrl = '';
     try {
       qrDataUrl = await QRCode.toDataURL(`https://qasr-radee.vercel.app/orders?number=${order.orderNumber}`);
@@ -172,7 +174,7 @@ export default function OrdersManagementPage() {
       </head>
       <body>
         <div class="header">
-          <h1> قصر الرضيع </h1>
+          <h1>قصر الرضيع</h1>
           <p style="color: #6b7280; font-size: 16px;">متجركم الموثوق لملابس وأدوات الأطفال والرضع</p>
         </div>
 
@@ -243,13 +245,12 @@ export default function OrdersManagementPage() {
 
         <div class="footer">
           <p><strong>قصر الرضيع</strong> - جميع الحقوق محفوظة © 2025</p>
-          <p>للاستفسار: info@qasrradee.com | 0558 86 47 55 00 00 00</p>
+          <p>للاستفسار: info@qasrradee.com | 0558 86 47 55</p>
         </div>
 
         <script>
           window.onload = () => {
             window.print();
-            // window.close(); // اختياري: لإغلاق النافذة بعد الطباعة
           };
         </script>
       </body>
@@ -263,7 +264,6 @@ export default function OrdersManagementPage() {
   const handleViewDetails = async (order: any) => {
     setSelectedOrder(order);
     
-    // توليد QR Code
     try {
       const qrUrl = await QRCode.toDataURL(`https://qasr-radee.vercel.app/orders?number=${order.orderNumber}`);
       setQrCodeUrl(qrUrl);
@@ -293,6 +293,7 @@ export default function OrdersManagementPage() {
     }
 
     setFilteredOrders(filtered);
+    setCurrentPage(1); // ✅ إعادة للصفحة الأولى عند الفلترة
   }, [selectedStatus, searchQuery, orders]);
 
   const handleLogout = () => {
@@ -315,10 +316,16 @@ export default function OrdersManagementPage() {
     };
   };
 
+  // ✅ Pagination
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentOrders = filteredOrders.slice(startIndex, endIndex);
+
   const stats = getStats();
+
   return (
     <div className="min-h-screen bg-gray-50 font-arabic">
-      {/* Header - نفس الكود السابق */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -352,7 +359,7 @@ export default function OrdersManagementPage() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        {/* Stats - نفس الكود السابق */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 shadow-sm border">
             <div className="flex items-center gap-3">
@@ -439,7 +446,7 @@ export default function OrdersManagementPage() {
           </div>
         </div>
 
-        {/* Filters - نفس الكود السابق */}
+        {/* Filters */}
         <div className="bg-white rounded-xl p-4 shadow-sm border mb-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="relative">
@@ -484,12 +491,18 @@ export default function OrdersManagementPage() {
           </div>
         </div>
 
+        {/* ✅ عرض عدد النتائج */}
+        <div className="mb-4 text-sm text-gray-600">
+          عرض {startIndex + 1} - {Math.min(endIndex, filteredOrders.length)} من أصل {filteredOrders.length} طلب
+        </div>
+
         {/* Orders Table */}
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
+                  <th className="text-right p-4 text-sm font-semibold text-gray-600">#</th>
                   <th className="text-right p-4 text-sm font-semibold text-gray-600">رقم الطلب</th>
                   <th className="text-right p-4 text-sm font-semibold text-gray-600">العميل</th>
                   <th className="text-right p-4 text-sm font-semibold text-gray-600">الهاتف</th>
@@ -503,14 +516,14 @@ export default function OrdersManagementPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-20">
+                    <td colSpan={9} className="text-center py-20">
                       <RefreshCw className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
                       <p className="text-gray-600 font-bold">جاري التحميل...</p>
                     </td>
                   </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-20">
+                    <td colSpan={9} className="text-center py-20">
                       <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-xl text-gray-500 font-bold">
                         {orders.length === 0 ? 'لا توجد طلبات' : 'لا توجد نتائج للبحث'}
@@ -518,12 +531,14 @@ export default function OrdersManagementPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((order) => {
+                  currentOrders.map((order, index) => {
                     const statusInfo = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.pending;
-                    const StatusIcon = statusInfo?.icon || Clock;
 
                     return (
                       <tr key={order.id} className="border-b hover:bg-gray-50 transition">
+                        <td className="p-4 text-gray-600 font-semibold">
+                          {startIndex + index + 1}
+                        </td>
                         <td className="p-4">
                           <div className="font-bold text-blue-600">{order.orderNumber}</div>
                           <div className="text-xs text-gray-500">
@@ -557,7 +572,6 @@ export default function OrdersManagementPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          {/* ✅ Dropdown لتغيير الحالة */}
                           <select
                             value={order.status}
                             onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
@@ -588,7 +602,6 @@ export default function OrdersManagementPage() {
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2">
-                            {/* ✅ زر التفاصيل */}
                             <button
                               onClick={() => handleViewDetails(order)}
                               className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"
@@ -597,7 +610,6 @@ export default function OrdersManagementPage() {
                               <Eye className="w-4 h-4" />
                             </button>
                             
-                            {/* ✅ زر الطباعة */}
                             <button
                               onClick={() => handlePrint(order)}
                               className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition"
@@ -606,7 +618,6 @@ export default function OrdersManagementPage() {
                               <Printer className="w-4 h-4" />
                             </button>
                             
-                            {/* ✅ زر الحذف */}
                             <button
                               onClick={() => handleDelete(order.id)}
                               className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
@@ -624,9 +635,56 @@ export default function OrdersManagementPage() {
             </table>
           </div>
         </div>
+
+        {/* ✅ Pagination */}
+        {filteredOrders.length > itemsPerPage && (
+          <div className="mt-6 flex items-center justify-between">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
+                currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              <ChevronRight className="w-5 h-5" />
+              السابق
+            </button>
+
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-10 h-10 rounded-lg font-semibold transition ${
+                    currentPage === page
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
+                currentPage === totalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              التالي
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ✅ Modal التفاصيل */}
+      {/* Modal التفاصيل */}
       {showModal && selectedOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -643,7 +701,6 @@ export default function OrdersManagementPage() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-6">
-              {/* معلومات العميل */}
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-bold text-gray-900 mb-4">📋 معلومات العميل</h3>
                 <div className="space-y-2">
@@ -655,7 +712,6 @@ export default function OrdersManagementPage() {
                 </div>
               </div>
 
-              {/* عنوان التسليم */}
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-bold text-gray-900 mb-4">📍 عنوان التسليم</h3>
                 <div className="space-y-2">
@@ -666,7 +722,6 @@ export default function OrdersManagementPage() {
               </div>
             </div>
 
-            {/* المنتجات */}
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
               <h3 className="font-bold text-gray-900 mb-4">📦 المنتجات</h3>
               <div className="space-y-2">
@@ -684,7 +739,6 @@ export default function OrdersManagementPage() {
               </div>
             </div>
 
-            {/* الإجمالي */}
             <div className="bg-blue-50 rounded-xl p-4 mb-6">
               <div className="flex justify-between mb-2">
                 <span>المجموع الفرعي:</span>
@@ -700,7 +754,6 @@ export default function OrdersManagementPage() {
               </div>
             </div>
 
-            {/* QR Code */}
             {qrCodeUrl && (
               <div className="text-center bg-gray-50 rounded-xl p-4">
                 <h3 className="font-bold text-gray-900 mb-4">📱 رمز التتبع</h3>

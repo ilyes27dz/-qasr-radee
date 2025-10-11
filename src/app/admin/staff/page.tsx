@@ -76,8 +76,8 @@ export default function StaffManagementPage() {
       setStaff(data);
       
       if (data.length > 0) {
-        toast.success(`تم تحميل ${data.length} موظف ✅`);
-      }
+// toast.success(`تم تحميل ${data.length} موظف ✅`);
+       }
     } catch (error) {
       console.error('Error:', error);
       toast.error('فشل تحميل الموظفين');

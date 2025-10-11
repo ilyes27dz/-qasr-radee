@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
       setOrders(sortedOrders);
       
       if (sortedOrders.length > 0) {
-        toast.success(`تم تحميل ${sortedOrders.length} طلب ✅`);
+        //toast.success(`تم تحميل ${sortedOrders.length} طلب ✅`);
       }
     } catch (error) {
       console.error('❌ Error loading data:', error);

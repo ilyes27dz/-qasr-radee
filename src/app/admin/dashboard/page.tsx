@@ -85,8 +85,11 @@ export default function AdminDashboard() {
       setStats(data);
       
       if (data.totalOrders > 0) {
-        toast.success('تم تحديث الإحصائيات ✅');
-      }
+  toast.success('تم تحديث الإحصائيات ✅', {
+    duration: 1000, // 1 ثانية فقط
+  });
+}
+
     } catch (error) {
       console.error('❌ Error loading stats:', error);
       toast.error('فشل تحميل الإحصائيات');
