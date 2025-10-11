@@ -21,39 +21,49 @@ export default function ContactPage() {
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      const messages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      
-      const newMessage = {
-        id: Date.now().toString(),
-        ...formData,
-        status: 'unread',
-        createdAt: new Date().toISOString(),
-      };
+  try {
+    // ✅ إرسال للـ API بدلاً من localStorage
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+      }),
+    });
 
-      messages.unshift(newMessage);
-      localStorage.setItem('contact_messages', JSON.stringify(messages));
+    const data = await response.json();
 
-      toast.success('تم إرسال رسالتك بنجاح! ✅');
-      toast('سنتواصل معك قريباً 📞', { icon: '👋' });
-
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: '',
-      });
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('حدث خطأ أثناء إرسال الرسالة');
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error(data.error || 'فشل إرسال الرسالة');
     }
-  };
+
+    toast.success('تم إرسال رسالتك بنجاح! ✅');
+    toast('سنتواصل معك قريباً 📞', { icon: '👋' });
+
+    // إعادة تعيين النموذج
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      subject: '',
+      message: '',
+    });
+  } catch (error: any) {
+    console.error('Error:', error);
+    toast.error(error.message || 'حدث خطأ أثناء إرسال الرسالة');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gray-50 font-arabic">
