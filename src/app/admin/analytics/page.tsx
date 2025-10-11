@@ -222,7 +222,6 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* زر Google Analytics - جديد */}
               <a
                 href="https://analytics.google.com"
                 target="_blank"
@@ -271,7 +270,6 @@ export default function AnalyticsPage() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        {/* باقي الكود بدون تغيير */}
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-xl">
             <div className="flex items-center justify-between mb-4">
@@ -325,7 +323,30 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* باقي الكود كما هو - نفس الـ grid والجداول */}
+        {/* إحصائيات Google Analytics المباشرة - جديد */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border mb-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-blue-600" />
+            إحصائيات الزوار المباشرة من Google Analytics
+          </h3>
+          
+          <div className="bg-gray-50 rounded-lg overflow-hidden border-2 border-gray-200">
+            <iframe
+              src="https://lookerstudio.google.com/embed/reporting/3e5475a1-7f9a-4b08-8e9a-89ee5e57d52b/page/EWMbF"
+              className="w-full"
+              style={{ height: '800px', border: 0 }}
+              allowFullScreen
+            />
+          </div>
+          
+          <div className="mt-4 flex items-center gap-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+            البيانات محدثة تلقائياً من Google Analytics (يتم التحديث كل ساعة)
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 shadow-sm border">
             <div className="flex items-center gap-3">
