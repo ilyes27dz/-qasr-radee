@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   DollarSign, TrendingUp, TrendingDown, ShoppingCart, Package,
   Users, Calendar, Download, RefreshCw, LogOut, Home, ArrowUpRight,
-  Clock, BarChart3, CheckCircle
+  Clock, BarChart3, CheckCircle, TrendingUpIcon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -165,9 +165,8 @@ export default function AnalyticsPage() {
       [''],
       ['عدد الطلبات الكلي', revenue.orderCount.toString()],
       ['الطلبات المسلّمة', revenue.deliveredCount.toString()],
-  ['الطلبات قيد المعالجة', (revenue.pendingCount || 0).toString()],
-['الطلبات الملغاة', (revenue.cancelledCount || 0).toString()],
-
+      ['الطلبات قيد المعالجة', (revenue.pendingCount || 0).toString()],
+      ['الطلبات الملغاة', (revenue.cancelledCount || 0).toString()],
       [''],
       ['تفاصيل الطلبات'],
       ['رقم الطلب', 'العميل', 'المبلغ', 'الحالة', 'التاريخ'],
@@ -223,12 +222,24 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* زر Google Analytics - جديد */}
+              <a
+                href="https://analytics.google.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-semibold shadow-md hover:shadow-lg"
+                title="فتح Google Analytics"
+              >
+                <TrendingUpIcon className="w-5 h-5" />
+                <span className="hidden sm:inline">إحصائيات الزوار</span>
+              </a>
+
               <button
                 onClick={exportToCSV}
                 className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition font-semibold"
               >
                 <Download className="w-5 h-5" />
-                تصدير التقرير
+                <span className="hidden sm:inline">تصدير التقرير</span>
               </button>
 
               <button
@@ -252,7 +263,7 @@ export default function AnalyticsPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-semibold"
               >
                 <LogOut className="w-5 h-5" />
-                خروج
+                <span className="hidden sm:inline">خروج</span>
               </button>
             </div>
           </div>
@@ -260,6 +271,7 @@ export default function AnalyticsPage() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
+        {/* باقي الكود بدون تغيير */}
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-xl">
             <div className="flex items-center justify-between mb-4">
@@ -312,6 +324,8 @@ export default function AnalyticsPage() {
             </p>
           </div>
         </div>
+
+        {/* باقي الكود كما هو - نفس الـ grid والجداول */}
         <div className="grid md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 shadow-sm border">
             <div className="flex items-center gap-3">
