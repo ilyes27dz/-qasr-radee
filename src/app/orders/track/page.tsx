@@ -13,56 +13,47 @@ export default function TrackOrderPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!orderNumber.trim() && !phoneNumber.trim()) {
-      toast.error('الرجاء إدخال رقم الطلب أو رقم الهاتف');
-      return;
-    }
+const handleSearch = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!orderNumber.trim() && !phoneNumber.trim()) {
+    toast.error('الرجاء إدخال رقم الطلب أو رقم الهاتف');
+    return;
+  }
 
-    setLoading(true);
-    setSearched(true);
+  setLoading(true);
+  setSearched(true);
 
-    try {
-      // قراءة الطلبات من localStorage
-      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-      console.log('📦 Total orders:', orders.length);
-      
-      // البحث عن الطلب
-      let foundOrder = null;
-      
-      if (orderNumber.trim()) {
-        foundOrder = orders.find((o: any) => 
-          o.orderNumber?.toLowerCase() === orderNumber.trim().toLowerCase()
-        );
-        console.log('🔍 Searching by order number:', orderNumber);
-      }
-      
-      if (!foundOrder && phoneNumber.trim()) {
-        foundOrder = orders.find((o: any) => 
-          o.customerPhone === phoneNumber.trim()
-        );
-        console.log('🔍 Searching by phone:', phoneNumber);
-      }
+  try {
+    // ✅ استخدام الـ API
+    const response = await fetch('/api/orders/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderNumber: orderNumber.trim() || undefined,
+        phone: phoneNumber.trim() || undefined,
+      }),
+    });
 
-      if (foundOrder) {
-        setOrder(foundOrder);
-        console.log('✅ Order found:', foundOrder);
-        toast.success('تم العثور على الطلب! 🎉');
-      } else {
-        setOrder(null);
-        console.log('❌ Order not found');
-        toast.error('رقم الطلب أو الهاتف غير صحيح ❌');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('حدث خطأ أثناء البحث');
+    if (response.ok) {
+      const foundOrder = await response.json();
+      setOrder(foundOrder);
+      console.log('✅ Order found:', foundOrder);
+      toast.success('تم العثور على الطلب! 🎉', { duration: 1000 });
+    } else {
       setOrder(null);
-    } finally {
-      setLoading(false);
+      const errorData = await response.json();
+      console.log('❌ Order not found:', errorData);
+      toast.error('رقم الطلب أو الهاتف غير صحيح ❌', { duration: 1000 });
     }
-  };
+  } catch (error) {
+    console.error('Error:', error);
+    toast.error('حدث خطأ أثناء البحث');
+    setOrder(null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const statusConfig: any = {
     pending: {
@@ -283,7 +274,7 @@ export default function TrackOrderPage() {
                               📦
                             </div>
                             <div>
-                              <p className="font-bold text-gray-900">{item.productName}</p>
+                              <p className="font-bold text-gray-900">{item.productName || item.product?.name}</p>
                               <p className="text-sm text-gray-500">الكمية: {item.quantity}</p>
                             </div>
                           </div>
