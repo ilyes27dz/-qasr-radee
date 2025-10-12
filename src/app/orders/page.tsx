@@ -1,59 +1,98 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Package, Truck, CheckCircle, XCircle, Clock, MapPin, Phone, User, Home } from 'lucide-react';
+import { Search, Package, Truck, CheckCircle, XCircle, Clock, MapPin, Phone, User, Home, Calendar, DollarSign } from 'lucide-react';
 import Header from '@/components/Header';
 import toast from 'react-hot-toast';
 
 export default function TrackOrderPage() {
+  const searchParams = useSearchParams();
   const [orderNumber, setOrderNumber] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-const handleSearch = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  if (!orderNumber.trim() && !phoneNumber.trim()) {
-    toast.error('الرجاء إدخال رقم الطلب أو رقم الهاتف');
-    return;
-  }
-
-  setLoading(true);
-  setSearched(true);
-
-  try {
-    // ✅ استخدام الـ API
-    const response = await fetch('/api/orders/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        orderNumber: orderNumber.trim() || undefined,
-        phone: phoneNumber.trim() || undefined,
-      }),
-    });
-
-    if (response.ok) {
-      const foundOrder = await response.json();
-      setOrder(foundOrder);
-      console.log('✅ Order found:', foundOrder);
-      toast.success('تم العثور على الطلب! 🎉', { duration: 1000 });
-    } else {
-      setOrder(null);
-      const errorData = await response.json();
-      console.log('❌ Order not found:', errorData);
-      toast.error('رقم الطلب أو الهاتف غير صحيح ❌', { duration: 1000 });
+  // ✅ جلب رقم الطلب من URL
+  useEffect(() => {
+    const numberFromUrl = searchParams.get('number');
+    if (numberFromUrl) {
+      setOrderNumber(numberFromUrl);
+      // البحث تلقائياً
+      searchByOrderNumber(numberFromUrl);
     }
-  } catch (error) {
-    console.error('Error:', error);
-    toast.error('حدث خطأ أثناء البحث');
-    setOrder(null);
-  } finally {
-    setLoading(false);
-  }
-};
+  }, [searchParams]);
+
+  // ✅ البحث برقم الطلب
+  const searchByOrderNumber = async (number: string) => {
+    setLoading(true);
+    setSearched(true);
+
+    try {
+      const response = await fetch('/api/orders/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderNumber: number }),
+      });
+
+      if (response.ok) {
+        const foundOrder = await response.json();
+        setOrder(foundOrder);
+        console.log('✅ Order found:', foundOrder);
+        toast.success('تم العثور على الطلب! 🎉', { duration: 1000 });
+      } else {
+        setOrder(null);
+        toast.error('رقم الطلب غير صحيح ❌', { duration: 1000 });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('حدث خطأ أثناء البحث');
+      setOrder(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!orderNumber.trim() && !phoneNumber.trim()) {
+      toast.error('الرجاء إدخال رقم الطلب أو رقم الهاتف');
+      return;
+    }
+
+    setLoading(true);
+    setSearched(true);
+
+    try {
+      const response = await fetch('/api/orders/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderNumber: orderNumber.trim() || undefined,
+          phone: phoneNumber.trim() || undefined,
+        }),
+      });
+
+      if (response.ok) {
+        const foundOrder = await response.json();
+        setOrder(foundOrder);
+        console.log('✅ Order found:', foundOrder);
+        toast.success('تم العثور على الطلب! 🎉', { duration: 1000 });
+      } else {
+        setOrder(null);
+        toast.error('رقم الطلب أو الهاتف غير صحيح ❌', { duration: 1000 });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('حدث خطأ أثناء البحث');
+      setOrder(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const statusConfig: any = {
     pending: {
@@ -167,7 +206,7 @@ const handleSearch = async (e: React.FormEvent) => {
                 <div className="space-y-6 animate-fade-in">
                   {/* Status Card */}
                   <div className={`rounded-3xl p-8 border-2 ${currentStatus.color} shadow-xl`}>
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                       <div className="flex items-center gap-4">
                         {StatusIcon && <StatusIcon className="w-12 h-12" />}
                         <div>
@@ -207,7 +246,7 @@ const handleSearch = async (e: React.FormEvent) => {
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <div className="flex items-start gap-3">
-                          <User className="w-6 h-6 text-blue-600 mt-1" />
+                          <User className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
                           <div>
                             <p className="text-sm text-gray-500">اسم العميل</p>
                             <p className="text-lg font-bold text-gray-900">{order.customerName}</p>
@@ -215,7 +254,7 @@ const handleSearch = async (e: React.FormEvent) => {
                         </div>
 
                         <div className="flex items-start gap-3">
-                          <Phone className="w-6 h-6 text-green-600 mt-1" />
+                          <Phone className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
                           <div>
                             <p className="text-sm text-gray-500">رقم الهاتف</p>
                             <p className="text-lg font-bold text-gray-900">{order.customerPhone}</p>
@@ -223,7 +262,7 @@ const handleSearch = async (e: React.FormEvent) => {
                         </div>
 
                         <div className="flex items-start gap-3">
-                          <MapPin className="w-6 h-6 text-red-600 mt-1" />
+                          <MapPin className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
                           <div>
                             <p className="text-sm text-gray-500">العنوان</p>
                             <p className="text-lg font-bold text-gray-900">
@@ -236,7 +275,10 @@ const handleSearch = async (e: React.FormEvent) => {
 
                       <div className="space-y-4">
                         <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                          <p className="text-sm text-blue-600 mb-1">تاريخ الطلب</p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="w-4 h-4 text-blue-600" />
+                            <p className="text-sm text-blue-600">تاريخ الطلب</p>
+                          </div>
                           <p className="text-lg font-bold text-blue-900">
                             {new Date(order.createdAt).toLocaleDateString('ar-DZ', {
                               year: 'numeric',
@@ -247,14 +289,24 @@ const handleSearch = async (e: React.FormEvent) => {
                         </div>
 
                         <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                          <p className="text-sm text-green-600 mb-1">المبلغ الإجمالي</p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <DollarSign className="w-4 h-4 text-green-600" />
+                            <p className="text-sm text-green-600">المبلغ الإجمالي</p>
+                          </div>
                           <p className="text-3xl font-black text-green-700">
-                            {order.total.toLocaleString()} دج
+                            {order.total?.toLocaleString() || 0} دج
                           </p>
+                          <div className="mt-2 text-xs text-green-600">
+                            <p>المجموع الفرعي: {order.subtotal?.toLocaleString() || 0} دج</p>
+                            <p>الشحن: {order.shippingCost?.toLocaleString() || 0} دج</p>
+                          </div>
                         </div>
 
                         <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
-                          <p className="text-sm text-purple-600 mb-1">عدد المنتجات</p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Package className="w-4 h-4 text-purple-600" />
+                            <p className="text-sm text-purple-600">عدد المنتجات</p>
+                          </div>
                           <p className="text-xl font-bold text-purple-900">
                             {order.items?.length || 0} منتج
                           </p>
@@ -264,40 +316,43 @@ const handleSearch = async (e: React.FormEvent) => {
                   </div>
 
                   {/* Products */}
-                  <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-gray-200">
-                    <h3 className="text-2xl font-black text-gray-900 mb-6">المنتجات</h3>
-                    <div className="space-y-4">
-                      {order.items?.map((item: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                          <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center text-3xl">
-                              📦
+                  {order.items && order.items.length > 0 && (
+                    <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-gray-200">
+                      <h3 className="text-2xl font-black text-gray-900 mb-6">المنتجات</h3>
+                      <div className="space-y-4">
+                        {order.items.map((item: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-4">
+                              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center text-3xl">
+                                📦
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-900">{item.productName}</p>
+                                <p className="text-sm text-gray-500">الكمية: {item.quantity}</p>
+                                <p className="text-xs text-gray-400">السعر: {item.price?.toLocaleString()} دج</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-bold text-gray-900">{item.productName || item.product?.name}</p>
-                              <p className="text-sm text-gray-500">الكمية: {item.quantity}</p>
-                            </div>
+                            <p className="text-xl font-bold text-blue-600">
+                              {((item.price || 0) * (item.quantity || 0)).toLocaleString()} دج
+                            </p>
                           </div>
-                          <p className="text-xl font-bold text-blue-600">
-                            {(item.price * item.quantity).toLocaleString()} دج
-                          </p>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Actions */}
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 flex-wrap">
                     <Link
                       href="/"
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition shadow-xl flex items-center justify-center gap-2"
+                      className="flex-1 min-w-[200px] bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition shadow-xl flex items-center justify-center gap-2"
                     >
                       <Home className="w-5 h-5" />
                       العودة للرئيسية
                     </Link>
                     <Link
                       href="/products"
-                      className="flex-1 bg-white border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-bold hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                      className="flex-1 min-w-[200px] bg-white border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-bold hover:bg-gray-50 transition flex items-center justify-center gap-2"
                     >
                       <Package className="w-5 h-5" />
                       تصفح المنتجات

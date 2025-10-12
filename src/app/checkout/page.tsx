@@ -12,6 +12,7 @@ import UserMenu from '@/components/UserMenu';
 import toast from 'react-hot-toast';
 
 // ✅ نموذج البيانات
+// ✅ نموذج البيانات
 interface AlgeriaCity {
   id: number;
   commune_name: string;
@@ -21,6 +22,69 @@ interface AlgeriaCity {
   wilaya_name: string;
   wilaya_name_ascii: string;
 }
+
+// ✅ ترتيب الولايات الرسمي (01-58)
+const ALGERIA_WILAYAS_ORDERED = [
+  { code: 1, name: 'أدرار' },
+  { code: 2, name: 'الشلف' },
+  { code: 3, name: 'الأغواط' },
+  { code: 4, name: 'أم البواقي' },
+  { code: 5, name: 'باتنة' },
+  { code: 6, name: 'بجاية' },
+  { code: 7, name: 'بسكرة' },
+  { code: 8, name: 'بشار' },
+  { code: 9, name: 'البليدة' },
+  { code: 10, name: 'البويرة' },
+  { code: 11, name: 'تمنراست' },
+  { code: 12, name: 'تبسة' },
+  { code: 13, name: 'تلمسان' },
+  { code: 14, name: 'تيارت' },
+  { code: 15, name: 'تيزي وزو' },
+  { code: 16, name: 'الجزائر' },
+  { code: 17, name: 'الجلفة' },
+  { code: 18, name: 'جيجل' },
+  { code: 19, name: 'سطيف' },
+  { code: 20, name: 'سعيدة' },
+  { code: 21, name: 'سكيكدة' },
+  { code: 22, name: 'سيدي بلعباس' },
+  { code: 23, name: 'عنابة' },
+  { code: 24, name: 'قالمة' },
+  { code: 25, name: 'قسنطينة' },
+  { code: 26, name: 'المدية' },
+  { code: 27, name: 'مستغانم' },
+  { code: 28, name: 'المسيلة' },
+  { code: 29, name: 'معسكر' },
+  { code: 30, name: 'ورقلة' },
+  { code: 31, name: 'وهران' },
+  { code: 32, name: 'البيض' },
+  { code: 33, name: 'إليزي' },
+  { code: 34, name: 'برج بوعريريج' },
+  { code: 35, name: 'بومرداس' },
+  { code: 36, name: 'الطارف' },
+  { code: 37, name: 'تندوف' },
+  { code: 38, name: 'تيسمسيلت' },
+  { code: 39, name: 'الوادي' },
+  { code: 40, name: 'خنشلة' },
+  { code: 41, name: 'سوق أهراس' },
+  { code: 42, name: 'تيبازة' },
+  { code: 43, name: 'ميلة' },
+  { code: 44, name: 'عين الدفلى' },
+  { code: 45, name: 'النعامة' },
+  { code: 46, name: 'عين تموشنت' },
+  { code: 47, name: 'غرداية' },
+  { code: 48, name: 'غليزان' },
+  { code: 49, name: 'تيميمون' },
+  { code: 50, name: 'برج باجي مختار' },
+  { code: 51, name: 'أولاد جلال' },
+  { code: 52, name: 'بني عباس' },
+  { code: 53, name: 'عين صالح' },
+  { code: 54, name: 'عين قزام' },
+  { code: 55, name: 'تقرت' },
+  { code: 56, name: 'جانت' },
+  { code: 57, name: 'المغير' },
+  { code: 58, name: 'المنيعة' }
+];
+
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -74,24 +138,24 @@ export default function CheckoutPage() {
   }, []);
 
   // ✅ تحميل ملف JSON
-  const loadAlgeriaData = async () => {
-    try {
-      const response = await fetch('/algeria_cities.json');
-      const data: AlgeriaCity[] = await response.json();
-      
-      setAlgeriaData(data);
-      
-      // ✅ استخراج الولايات الفريدة وترتيبها أبجدياً
-      const uniqueWilayas = [...new Set(data.map(item => item.wilaya_name))]
-        .sort((a, b) => a.localeCompare(b, 'ar'));
-      setWilayas(uniqueWilayas);
-      
-      console.log('✅ تم تحميل', data.length, 'بلدية');
-    } catch (error) {
-      console.error('❌ فشل تحميل البيانات:', error);
-      toast.error('فشل تحميل بيانات الولايات');
-    }
-  };
+const loadAlgeriaData = async () => {
+  try {
+    const response = await fetch('/algeria_cities.json');
+    const data: AlgeriaCity[] = await response.json();
+    
+    setAlgeriaData(data);
+    
+    // ✅ استخدام الترتيب الرسمي للولايات
+    const orderedWilayas = ALGERIA_WILAYAS_ORDERED.map(w => w.name);
+    setWilayas(orderedWilayas);
+    
+    console.log('✅ تم تحميل', data.length, 'بلدية مع ترتيب الولايات الرسمي');
+  } catch (error) {
+    console.error('❌ فشل تحميل البيانات:', error);
+    toast.error('فشل تحميل بيانات الولايات');
+  }
+};
+
 
   // ✅ تحميل الأسعار من API
   const loadShippingPrices = async () => {
