@@ -61,17 +61,18 @@ export default function NotificationBell() {
         const latestNotification = newNotifications.find((n: Notification) => !n.read);
         if (latestNotification) {
           toast.success(
-            `${latestNotification.title}\n${latestNotification.message}`,
-            {
-              icon: getNotificationIcon(latestNotification.type),
-              duration: 5000,
-              position: 'top-center',
-              style: {
-                marginTop: '80px',
-                maxWidth: '90vw',
-              },
-            }
-          );
+  `${latestNotification.title}\n${latestNotification.message}`,
+  {
+    icon: getNotificationIcon(latestNotification.type),
+    duration: 5000,
+    position: 'bottom-center', // ✅ في الأسفل بدلاً من الأعلى!
+    style: {
+      marginBottom: '20px', // ✅ بعيد عن أسفل الشاشة
+      maxWidth: '90vw',
+    },
+  }
+);
+
         }
       }
       
@@ -120,15 +121,16 @@ export default function NotificationBell() {
     <>
       {/* ✅ Toaster Component */}
       <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            marginTop: '80px',
-            zIndex: 9997,
-          },
-        }}
-      />
+  position="bottom-center" // ✅ في الأسفل
+  toastOptions={{
+    duration: 3000,
+    style: {
+      marginBottom: '20px',
+      zIndex: 9997,
+    },
+  }}
+/>
+
 
       {/* Notification Bell Button */}
       <button

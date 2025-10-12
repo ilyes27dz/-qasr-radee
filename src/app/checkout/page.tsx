@@ -11,8 +11,6 @@ import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 import toast from 'react-hot-toast';
 
-// ✅ نموذج البيانات
-// ✅ نموذج البيانات
 interface AlgeriaCity {
   id: number;
   commune_name: string;
@@ -23,7 +21,6 @@ interface AlgeriaCity {
   wilaya_name_ascii: string;
 }
 
-// ✅ ترتيب الولايات الرسمي (01-58)
 const ALGERIA_WILAYAS_ORDERED = [
   { code: 1, name: 'أدرار' },
   { code: 2, name: 'الشلف' },
@@ -85,7 +82,6 @@ const ALGERIA_WILAYAS_ORDERED = [
   { code: 58, name: 'المنيعة' }
 ];
 
-
 export default function CheckoutPage() {
   const router = useRouter();
   const { cartItems, getCartTotal, clearCart, getCartCount } = useCart();
@@ -93,16 +89,13 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
 
-  // ✅ بيانات الجزائر
   const [algeriaData, setAlgeriaData] = useState<AlgeriaCity[]>([]);
   const [wilayas, setWilayas] = useState<string[]>([]);
   const [communes, setCommunes] = useState<string[]>([]);
   const [deliveryType, setDeliveryType] = useState<'home' | 'office'>('home');
 
-  // ✅ الأسعار من API
   const [shippingPrices, setShippingPrices] = useState<any>({});
 
-  // ✅ الكوبون
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponLoading, setCouponLoading] = useState(false);
@@ -118,9 +111,7 @@ export default function CheckoutPage() {
     notes: '',
   });
 
-  // ✅ تحميل البيانات عند بدء الصفحة
   useEffect(() => {
-    // تحميل بيانات المستخدم
     try {
       const userData = localStorage.getItem('customer_user');
       if (userData) {
@@ -130,34 +121,43 @@ export default function CheckoutPage() {
       console.error('Error loading user:', error);
     }
 
-    // ✅ تحميل بيانات الجزائر
     loadAlgeriaData();
-
-    // ✅ تحميل الأسعار من API
     loadShippingPrices();
   }, []);
 
-  // ✅ تحميل ملف JSON
-const loadAlgeriaData = async () => {
-  try {
-    const response = await fetch('/algeria_cities.json');
-    const data: AlgeriaCity[] = await response.json();
-    
-    setAlgeriaData(data);
-    
-    // ✅ استخدام الترتيب الرسمي للولايات
-    const orderedWilayas = ALGERIA_WILAYAS_ORDERED.map(w => w.name);
-    setWilayas(orderedWilayas);
-    
-    console.log('✅ تم تحميل', data.length, 'بلدية مع ترتيب الولايات الرسمي');
-  } catch (error) {
-    console.error('❌ فشل تحميل البيانات:', error);
-    toast.error('فشل تحميل بيانات الولايات');
-  }
-};
+  useEffect(() => {
+    if (algeriaData.length > 0) {
+      console.log('📊 البيانات جاهزة!');
+      console.log('عدد بلديات الشلف (02):', algeriaData.filter(d => d.wilaya_code === '02').length);
+      console.log('عدد بلديات بجاية (06):', algeriaData.filter(d => d.wilaya_code === '06').length);
+      console.log('مثال بلدية:', algeriaData.find(d => d.wilaya_code === '02'));
+    }
+  }, [algeriaData]);
 
+  const loadAlgeriaData = async () => {
+    try {
+      const response = await fetch('/algeria_cities.json');
+      let data: AlgeriaCity[] = await response.json();
+      
+      data = data.map(item => ({
+        ...item,
+        wilaya_name: item.wilaya_name.trim(),
+        commune_name: item.commune_name.trim(),
+        daira_name: item.daira_name.trim(),
+      }));
+      
+      setAlgeriaData(data);
+      
+      const orderedWilayas = ALGERIA_WILAYAS_ORDERED.map(w => w.name);
+      setWilayas(orderedWilayas);
+      
+      console.log('✅ تم تحميل', data.length, 'بلدية مع ترتيب الولايات الرسمي');
+    } catch (error) {
+      console.error('❌ فشل تحميل البيانات:', error);
+      toast.error('فشل تحميل بيانات الولايات');
+    }
+  };
 
-  // ✅ تحميل الأسعار من API
   const loadShippingPrices = async () => {
     try {
       const response = await fetch('/api/shipping-prices');
@@ -179,18 +179,15 @@ const loadAlgeriaData = async () => {
     }
   };
 
-  // ✅ حساب تكلفة الشحن من API
   const calculateShippingCost = (): number => {
     if (!formData.wilaya) return 500;
 
-    // ✅ جلب من state تم تحميله من API
     const wilayaPrice = shippingPrices[formData.wilaya];
     
     if (wilayaPrice) {
       return deliveryType === 'home' ? wilayaPrice.home : wilayaPrice.office;
     }
 
-    // السعر الافتراضي إذا لم يوجد
     return deliveryType === 'home' ? 600 : 500;
   };
 
@@ -205,7 +202,6 @@ const loadAlgeriaData = async () => {
 
   const total = cartTotal + shippingCost - discount;
 
-  // ✅ تطبيق الكوبون
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
       toast.error('أدخل كود الكوبون');
@@ -242,7 +238,6 @@ const loadAlgeriaData = async () => {
     toast.success('تم إلغاء الكوبون');
   };
 
-  // ✅ إرسال الطلب
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -298,7 +293,6 @@ const loadAlgeriaData = async () => {
     }
   };
 
-  // ✅ معالجة تغيير الحقول
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
@@ -307,14 +301,26 @@ const loadAlgeriaData = async () => {
       [name]: value,
     }));
 
-    // ✅ عند تغيير الولاية، حمّل البلديات مرتبة
-    if (name === 'wilaya' && value) {
-      const wilayaCommunes = algeriaData
-        .filter(item => item.wilaya_name === value)
-        .map(item => item.commune_name)
-        .sort((a, b) => a.localeCompare(b, 'ar'));
+    if (name === 'wilaya' && value && algeriaData.length > 0) {
+      const selectedWilaya = ALGERIA_WILAYAS_ORDERED.find(w => w.name === value);
       
-      setCommunes(wilayaCommunes);
+      if (selectedWilaya) {
+        const wilayaCode = selectedWilaya.code.toString().padStart(2, '0');
+        
+        const wilayaCommunes = algeriaData
+          .filter(item => item.wilaya_code === wilayaCode)
+          .map(item => item.commune_name)
+          .sort((a, b) => a.localeCompare(b, 'ar'));
+        
+        setCommunes(wilayaCommunes);
+        console.log(`✅ ${value} (${wilayaCode}): ${wilayaCommunes.length} بلدية`);
+        
+        if (wilayaCommunes.length === 0) {
+          console.error('❌ لم يتم العثور على بلديات!');
+          console.log('عينة من البيانات:', algeriaData.slice(0, 3));
+        }
+      }
+      
       setFormData(prev => ({ ...prev, commune: '' }));
     }
   };
@@ -354,7 +360,6 @@ const loadAlgeriaData = async () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-arabic">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg">
         <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
@@ -387,7 +392,6 @@ const loadAlgeriaData = async () => {
         </div>
       </header>
 
-      {/* Page Header */}
       <section className="py-10 md:py-20 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-5 md:top-10 right-5 md:right-10 text-6xl md:text-9xl animate-bounce-slow">✅</div>
@@ -405,13 +409,10 @@ const loadAlgeriaData = async () => {
         </div>
       </section>
 
-      {/* Checkout Form */}
       <section className="py-8 md:py-16">
         <div className="container mx-auto px-4">
           <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-6 md:gap-8">
-            {/* Form Fields */}
             <div className="lg:col-span-2 space-y-4 md:space-y-6">
-              {/* Shipping Info */}
               <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-8 border-2 border-gray-200 shadow-xl">
                 <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-8">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg">
@@ -487,7 +488,6 @@ const loadAlgeriaData = async () => {
                     )}
                   </div>
 
-                  {/* ✅ نوع التوصيل */}
                   <div className="md:col-span-2">
                     <label className="block text-gray-700 mb-3 font-bold text-sm md:text-lg">
                       نوع التوصيل *
@@ -562,7 +562,6 @@ const loadAlgeriaData = async () => {
                 </div>
               </div>
 
-              {/* Payment Method */}
               <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-8 border-2 border-gray-200 shadow-xl">
                 <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-8">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg">
@@ -617,7 +616,6 @@ const loadAlgeriaData = async () => {
               </div>
             </div>
 
-            {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl md:rounded-3xl p-4 md:p-8 border-2 border-blue-200 shadow-2xl lg:sticky lg:top-24">
                 <h2 className="text-xl md:text-3xl font-black text-gray-900 mb-4 md:mb-8 flex items-center gap-2 md:gap-3">
@@ -638,7 +636,6 @@ const loadAlgeriaData = async () => {
                   ))}
                 </div>
 
-                {/* Coupon */}
                 <div className="mb-4 md:mb-6 p-3 md:p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl md:rounded-2xl border-2 border-purple-200">
                   <label className="block text-xs md:text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                     <span className="text-xl md:text-2xl">🎟️</span>
@@ -732,7 +729,6 @@ const loadAlgeriaData = async () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-8 md:py-16">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center mb-4 md:mb-8">
