@@ -53,11 +53,7 @@ export default function StaffLoginPage() {
         toast.success('مرحباً ' + data.user.name + ' 🎉');
 
         setTimeout(() => {
-          if (data.user.role === 'admin') {
-            router.push('/admin/dashboard');
-          } else {
-            router.push('/staff/dashboard');
-          }
+          router.push('/admin/dashboard');
           router.refresh();
         }, 500);
       } else {
