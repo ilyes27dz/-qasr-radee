@@ -242,11 +242,12 @@ export default function CheckoutPage() {
     e.preventDefault();
     setLoading(true);
 
-    if (!formData.fullName || !formData.phone || !formData.wilaya || !formData.commune || !formData.address) {
-      toast.error('يرجى ملء جميع الحقول المطلوبة');
-      setLoading(false);
-      return;
-    }
+    if (!formData.fullName || !formData.phone || !formData.wilaya || !formData.commune) {
+  toast.error('يرجى ملء جميع الحقول المطلوبة');
+  setLoading(false);
+  return;
+}
+
 
     try {
       const response = await fetch('/api/orders', {
@@ -536,16 +537,16 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-gray-700 mb-2 md:mb-3 font-bold text-sm md:text-lg">العنوان التفصيلي *</label>
+<label className="block text-gray-700 mb-2 md:mb-3 font-bold text-sm md:text-lg">العنوان التفصيلي (اختياري)</label>
                     <textarea
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      rows={3}
-                      className="w-full px-3 md:px-5 py-2 md:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition text-sm md:text-lg"
-                      placeholder="أدخل عنوانك بالتفصيل"
-                      required
-                    />
+  name="address"
+  value={formData.address}
+  onChange={handleChange}
+  rows={3}
+  className="w-full px-3 md:px-5 py-2 md:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition text-sm md:text-lg"
+  placeholder="أدخل عنوانك بالتفصيل (اختياري)"
+/>
+
                   </div>
 
                   <div className="md:col-span-2">
