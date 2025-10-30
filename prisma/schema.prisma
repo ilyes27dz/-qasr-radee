@@ -23,14 +23,14 @@ model Product {
   category        String
   categoryId      String?
   ageGroup        String?
-  gender          String?  // unisex, boys, girls
+  gender          String?
   rating          Float    @default(0)
   sales           Int      @default(0)
   featured        Boolean  @default(false)
-  badge           String?  // جديد, أكثر مبيعاً, عرض ساخن, محدود
+  badge           String?
   enabled         Boolean  @default(true)
-  specifications  String?  // ✅ تفاصيل إضافية
-  attributes      Json?    // ✅ الحقول الديناميكية حسب الفئة
+  specifications  String?  // ✅ جديد - آمن
+  attributes      Json?    // ✅ جديد - آمن
   
   reviews         Review[]
   orderItems      OrderItem[]
@@ -38,8 +38,6 @@ model Product {
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
-  @@fulltext([nameAr, descriptionAr]) // للبحث
 }
 
 // ================================
@@ -59,11 +57,11 @@ model Order {
   address       String
   notes         String?
   
-  deliveryType  String      @default("office")  // home أو office
+  deliveryType  String      @default("office")  // ✅ جديد - آمن
   
-  status        String      @default("pending")  // pending, confirmed, shipped, delivered, cancelled
-  paymentMethod String      @default("cash_on_delivery")  // cash_on_delivery, bank_transfer, card
-  priority      String      @default("medium")  // low, medium, high
+  status        String      @default("pending")
+  paymentMethod String      @default("cash_on_delivery")
+  priority      String      @default("medium")
   
   subtotal      Float
   shippingCost  Float
@@ -85,14 +83,14 @@ model OrderItem {
   productName String
   quantity    Int
   price       Float
-  attributes  Json?   // ✅ الحقول الديناميكية عند الشراء
+  attributes  Json?   // ✅ جديد - آمن
   
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product @relation(fields: [productId], references: [id])
 }
 
 // ================================
-// 👥 المستخدمين (Admin & Employees)
+// 👥 المستخدمين
 // ================================
 model User {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -100,9 +98,9 @@ model User {
   email       String    @unique
   phone       String?
   password    String
-  role        String    @default("employee")  // admin, employee, manager
+  role        String    @default("employee")
   
-  permissions String[]  @default([])  // products, orders, users, settings
+  permissions String[]  @default([])
   isActive    Boolean   @default(true)
   lastLogin   DateTime?
   
@@ -116,7 +114,7 @@ model User {
 }
 
 // ================================
-// 🛍️ العملاء (Customers)
+// 🛍️ العملاء
 // ================================
 model Customer {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -236,7 +234,7 @@ model Coupon {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   code        String   @unique
   discount    Float
-  discountType String  // percentage أو fixed
+  discountType String
   minAmount   Float?
   maxUses     Int?
   usedCount   Int      @default(0)
@@ -252,7 +250,7 @@ model Coupon {
 // ================================
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  type      String   // "order", "review", "contact", "new_product"
+  type      String
   title     String
   message   String
   link      String?
@@ -270,7 +268,7 @@ model ContactMessage {
   email     String
   phone     String?
   message   String
-  status    String   @default("new")  // new, read, replied, closed
+  status    String   @default("new")
   
   createdAt DateTime @default(now())
   repliedAt DateTime?
@@ -282,10 +280,10 @@ model ContactMessage {
 // ================================
 model ShippingPrice {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  wilayaCode   Int      @unique // رمز الولاية (01-58)
-  wilayaName   String   // اسم الولاية
-  homePrice    Int      // سعر التوصيل للمنزل
-  officePrice  Int      // سعر التوصيل للمكتب
+  wilayaCode   Int      @unique
+  wilayaName   String
+  homePrice    Int
+  officePrice  Int
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -294,7 +292,7 @@ model ShippingPrice {
 }
 
 // ================================
-// 📊 إحصائيات (اختياري)
+// 📊 إحصائيات
 // ================================
 model DashboardStat {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
