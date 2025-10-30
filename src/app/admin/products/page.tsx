@@ -30,6 +30,52 @@ const ageGroups = [
   { value: '2-4years', label: '2-4 سنوات' },
 ];
 
+// ✅ الحقول الديناميكية حسب الفئة
+const categorySpecifications: Record<string, Array<{name: string; label: string; type: string; options?: string[]}>> = {
+  'ملابس': [
+    { name: 'size', label: 'المقاس', type: 'select', options: ['حديث الولادة', '0-3 شهور', '3-6 شهور', '6-12 شهر', '12-18 شهر', '18-24 شهر'] },
+    { name: 'age', label: 'السن المناسب', type: 'select', options: ['0-3 شهور', '3-6 شهور', '6-12 شهر', '1-2 سنة', '2-3 سنوات'] },
+    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'material', label: 'المادة', type: 'select', options: ['قطن 100%', 'قطن ممزوج', 'صوف', 'حرير'] },
+  ],
+  'للتغذية': [
+    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'capacity', label: 'السعة/الحجم', type: 'select', options: ['150ml', '250ml', '330ml', '500ml', 'حسب الطلب'] },
+    { name: 'material', label: 'المادة', type: 'select', options: ['بلاستيك طبي', 'زجاج', 'سيليكون', 'ستانلس ستيل'] },
+    { name: 'brand', label: 'الماركة', type: 'text' },
+  ],
+  'للرضاعة': [
+    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'capacity', label: 'السعة', type: 'select', options: ['120ml', '150ml', '240ml', '300ml'] },
+    { name: 'material', label: 'النوع', type: 'select', options: ['زجاج', 'بلاستيك آمن', 'سيليكون'] },
+    { name: 'anti_colic', label: 'مضادة للقولونج', type: 'select', options: ['نعم', 'لا'] },
+  ],
+  'ألعاب': [
+    { name: 'age', label: 'السن المناسب', type: 'select', options: ['0-6 شهور', '6-12 شهر', '1-2 سنة', '2-3 سنوات', '3+ سنوات'] },
+    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'material', label: 'المادة', type: 'select', options: ['بلاستيك آمن', 'خشب طبيعي', 'قماش', 'مطاط', 'معدن'] },
+    { name: 'safety', label: 'شهادة الأمان', type: 'select', options: ['CE', 'FDA', 'لا توجد'] },
+  ],
+  'للخرجات': [
+    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'capacity', label: 'السعة', type: 'select', options: ['صغير', 'متوسط', 'كبير'] },
+    { name: 'material', label: 'المادة', type: 'select', options: ['قماش مقاوم', 'جلد صناعي', 'نايلون'] },
+    { name: 'features', label: 'المميزات', type: 'text' },
+  ],
+  'للنظافة': [
+    { name: 'type', label: 'نوع المنتج', type: 'select', options: ['صابون', 'شامبو', 'مرطب', 'مناديل', 'كريم'] },
+    { name: 'volume', label: 'الحجم', type: 'select', options: ['100ml', '200ml', '500ml', 'علبة 50 قطعة'] },
+    { name: 'material', label: 'المكونات', type: 'text' },
+    { name: 'hypoallergenic', label: 'طبيعي وآمن', type: 'select', options: ['نعم', 'لا'] },
+  ],
+  'للنوم': [
+    { name: 'size', label: 'المقاس', type: 'select', options: ['حديث الولادة', '0-6 شهور', '6-12 شهر', '1-2 سنة'] },
+    { name: 'material', label: 'المادة', type: 'select', options: ['قطن 100%', 'موسلين', 'حرير'] },
+    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'tog_rating', label: 'درجة الدفء', type: 'select', options: ['0.5 TOG', '1 TOG', '2.5 TOG'] },
+  ],
+};
+
 export default function ProductsManagementPage() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
@@ -46,7 +92,7 @@ export default function ProductsManagementPage() {
     name: '',
     nameAr: '',
     descriptionAr: '',
-    specifications: '', // ← حقل جديد
+    specifications: '',
     price: 0,
     salePrice: 0,
     stock: 0,
@@ -57,6 +103,7 @@ export default function ProductsManagementPage() {
     badge: '',
     featured: false,
     enabled: true,
+    attributes: {} as Record<string, string>, // ✅ الحقول الديناميكية
   });
 
   useEffect(() => {
@@ -108,33 +155,40 @@ export default function ProductsManagementPage() {
     fetchProducts();
   }, [selectedCategory, searchQuery]);
 
-const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const files = e.target.files;
-  if (!files || files.length === 0) return;
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-  setUploading(true);
+    setUploading(true);
 
-  try {
-    const filesArray = Array.from(files);
-    
-    // رفع على Cloudinary ✅
-    const cloudinaryUrls = await uploadMultipleToCloudinary(filesArray);
-    
-    console.log('✅ تم رفع الصور على Cloudinary:', cloudinaryUrls);
-    
-    setUploadedImages([...uploadedImages, ...cloudinaryUrls]);
-    toast.success(`تم رفع ${cloudinaryUrls.length} صورة على Cloudinary ✅`);
-  } catch (error) {
-    console.error('❌ خطأ في رفع الصور:', error);
-    toast.error('فشل رفع الصور على Cloudinary');
-  } finally {
-    setUploading(false);
-  }
-};
-
+    try {
+      const filesArray = Array.from(files);
+      const cloudinaryUrls = await uploadMultipleToCloudinary(filesArray);
+      
+      console.log('✅ تم رفع الصور على Cloudinary:', cloudinaryUrls);
+      
+      setUploadedImages([...uploadedImages, ...cloudinaryUrls]);
+      toast.success(`تم رفع ${cloudinaryUrls.length} صورة على Cloudinary ✅`);
+    } catch (error) {
+      console.error('❌ خطأ في رفع الصور:', error);
+      toast.error('فشل رفع الصور على Cloudinary');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const removeImage = (index: number) => {
     setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+  };
+
+  const handleAttributeChange = (key: string, value: string) => {
+    setFormData({
+      ...formData,
+      attributes: {
+        ...formData.attributes,
+        [key]: value
+      }
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -240,7 +294,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       name: product.name,
       nameAr: product.nameAr,
       descriptionAr: product.descriptionAr,
-      specifications: product.specifications || '', // ← جديد
+      specifications: product.specifications || '',
       price: product.price,
       salePrice: product.salePrice || 0,
       stock: product.stock,
@@ -251,6 +305,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       badge: product.badge || '',
       featured: product.featured,
       enabled: product.enabled,
+      attributes: product.attributes || {},
     });
     setShowModal(true);
   };
@@ -262,7 +317,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       name: '',
       nameAr: '',
       descriptionAr: '',
-      specifications: '', // ← جديد
+      specifications: '',
       price: 0,
       salePrice: 0,
       stock: 0,
@@ -273,6 +328,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       badge: '',
       featured: false,
       enabled: true,
+      attributes: {},
     });
   };
 
@@ -289,17 +345,21 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   };
 
   const getProductImage = (images: string[]) => {
-  if (!images || images.length === 0) return null;
-  
-  const validImage = images.find(img => {
-    if (!img || img === 'placeholder.jpg') return false;
-    return img.startsWith('/uploads/') || 
-           img.startsWith('https://res.cloudinary.com/') ||
-           img.startsWith('http');
-  });
-  
-  return validImage || null;
-};
+    if (!images || images.length === 0) return null;
+    
+    const validImage = images.find(img => {
+      if (!img || img === 'placeholder.jpg') return false;
+      return img.startsWith('/uploads/') || 
+             img.startsWith('https://res.cloudinary.com/') ||
+             img.startsWith('http');
+    });
+    
+    return validImage || null;
+  };
+
+  const getCategoryAttributes = () => {
+    return categorySpecifications[formData.category] || [];
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-arabic">
@@ -688,15 +748,19 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 />
               </div>
 
-              {/* Specifications - NEW FIELD ✅ */}
+              {/* Specifications */}
               <div>
                 <label className="block font-bold mb-2">تفاصيل إضافية (اختياري)</label>
                 <textarea
                   value={formData.specifications || ''}
                   onChange={(e) => setFormData({...formData, specifications: e.target.value})}
-                  placeholder="مثال:&#10;الوزن: 200 جرام&#10;الأبعاد: 30×20 سم&#10;الخامة: قطن 100%&#10;المميزات: مقاوم للماء&#10;العناية: يُغسل بالماء الفاتر"
+                  placeholder="مثال:
+الوزن: 200 جرام
+الأبعاد: 30×20 سم
+الخامة: قطن 100%
+المميزات: مقاوم للماء"
                   className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  rows={6}
+                  rows={4}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   اكتب كل تفصيلة في سطر منفصل (اضغط Enter بعد كل معلومة)
@@ -753,6 +817,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                       setFormData({
                         ...formData, 
                         category: e.target.value,
+                        attributes: {},
                         categoryId: categories.findIndex(c => c.id === e.target.value).toString()
                       });
                     }}
@@ -789,6 +854,44 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   </select>
                 </div>
               </div>
+
+              {/* ✅ DYNAMIC ATTRIBUTES - حسب الفئة */}
+              {formData.category && getCategoryAttributes().length > 0 && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-bold mb-4 text-blue-900">
+                    مواصفات {formData.category}
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {getCategoryAttributes().map((attr) => (
+                      <div key={attr.name}>
+                        <label className="block font-bold mb-2 text-blue-900">
+                          {attr.label}
+                        </label>
+                        {attr.type === 'select' ? (
+                          <select
+                            value={formData.attributes[attr.name] || ''}
+                            onChange={(e) => handleAttributeChange(attr.name, e.target.value)}
+                            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">اختر {attr.label}</option>
+                            {attr.options?.map(opt => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={formData.attributes[attr.name] || ''}
+                            onChange={(e) => handleAttributeChange(attr.name, e.target.value)}
+                            placeholder={`أدخل ${attr.label}`}
+                            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Badge */}
               <div>
