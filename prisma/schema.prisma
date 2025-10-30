@@ -7,7 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// المنتجات
+// ================================
+// 📦 المنتجات
+// ================================
 model Product {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   name            String
@@ -19,24 +21,30 @@ model Product {
   stock           Int
   images          String[]
   category        String
-  categoryId      String
+  categoryId      String?
   ageGroup        String?
-  gender          String?
+  gender          String?  // unisex, boys, girls
   rating          Float    @default(0)
   sales           Int      @default(0)
   featured        Boolean  @default(false)
-  badge           String?
+  badge           String?  // جديد, أكثر مبيعاً, عرض ساخن, محدود
   enabled         Boolean  @default(true)
-  specifications  String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  specifications  String?  // ✅ تفاصيل إضافية
+  attributes      Json?    // ✅ الحقول الديناميكية حسب الفئة
   
   reviews         Review[]
   orderItems      OrderItem[]
   wishlistItems   WishlistItem[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@fulltext([nameAr, descriptionAr]) // للبحث
 }
 
-// الطلبات
+// ================================
+// 📋 الطلبات
+// ================================
 model Order {
   id            String      @id @default(auto()) @map("_id") @db.ObjectId
   orderNumber   String      @unique
@@ -51,11 +59,11 @@ model Order {
   address       String
   notes         String?
   
-  deliveryType  String      @default("office") // ✅ جديد: home أو office
+  deliveryType  String      @default("office")  // home أو office
   
-  status        String      @default("pending")
-  paymentMethod String      @default("cash_on_delivery")
-  priority      String      @default("medium")
+  status        String      @default("pending")  // pending, confirmed, shipped, delivered, cancelled
+  paymentMethod String      @default("cash_on_delivery")  // cash_on_delivery, bank_transfer, card
+  priority      String      @default("medium")  // low, medium, high
   
   subtotal      Float
   shippingCost  Float
@@ -77,21 +85,24 @@ model OrderItem {
   productName String
   quantity    Int
   price       Float
+  attributes  Json?   // ✅ الحقول الديناميكية عند الشراء
   
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product @relation(fields: [productId], references: [id])
 }
 
-// المستخدمين (Admin & Employees)
+// ================================
+// 👥 المستخدمين (Admin & Employees)
+// ================================
 model User {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   email       String    @unique
   phone       String?
   password    String
-  role        String    @default("employee")
+  role        String    @default("employee")  // admin, employee, manager
   
-  permissions String[]  @default([])
+  permissions String[]  @default([])  // products, orders, users, settings
   isActive    Boolean   @default(true)
   lastLogin   DateTime?
   
@@ -104,7 +115,9 @@ model User {
   updatedAt   DateTime  @updatedAt
 }
 
-// الزبائن
+// ================================
+// 🛍️ العملاء (Customers)
+// ================================
 model Customer {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -156,6 +169,9 @@ model WishlistItem {
   createdAt  DateTime @default(now())
 }
 
+// ================================
+// ⭐ التقييمات
+// ================================
 model Review {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
   productId  String    @db.ObjectId
@@ -169,6 +185,22 @@ model Review {
   createdAt  DateTime  @default(now())
 }
 
+model CustomerReview {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerName String
+  rating      Int
+  comment     String
+  productName String?
+  image       String?
+  isApproved  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ================================
+// 🎯 البنرات والإعلانات
+// ================================
 model Banner {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   text      String
@@ -180,36 +212,6 @@ model Banner {
   updatedAt DateTime @updatedAt
 }
 
-// كوبونات الخصم
-model Coupon {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  code        String   @unique
-  discount    Float
-  discountType String
-  minAmount   Float?
-  maxUses     Int?
-  usedCount   Int      @default(0)
-  isActive    Boolean  @default(true)
-  expiresAt   DateTime?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// التقييمات العامة
-model CustomerReview {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  customerName String
-  rating      Int
-  comment     String
-  productName String?
-  image       String?
-  isApproved  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// العروض
 model Offer {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
@@ -227,39 +229,105 @@ model Offer {
   updatedAt   DateTime @updatedAt
 }
 
-// الإشعارات
+// ================================
+// 🎟️ كوبونات الخصم
+// ================================
+model Coupon {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  code        String   @unique
+  discount    Float
+  discountType String  // percentage أو fixed
+  minAmount   Float?
+  maxUses     Int?
+  usedCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ================================
+// 📬 الإشعارات
+// ================================
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  type      String   // "order", "review", "contact"
+  type      String   // "order", "review", "contact", "new_product"
   title     String
   message   String
   link      String?
   read      Boolean  @default(false)
+  
   createdAt DateTime @default(now())
 }
 
-// رسائل اتصل بنا
+// ================================
+// 💬 رسائل اتصل بنا
+// ================================
 model ContactMessage {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   email     String
   phone     String?
   message   String
-  status    String   @default("new")
+  status    String   @default("new")  // new, read, replied, closed
+  
   createdAt DateTime @default(now())
   repliedAt DateTime?
   reply     String?
 }
 
-// ✅ أسعار الشحن - جديد
+// ================================
+// 🚚 أسعار الشحن
+// ================================
 model ShippingPrice {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   wilayaCode   Int      @unique // رمز الولاية (01-58)
   wilayaName   String   // اسم الولاية
   homePrice    Int      // سعر التوصيل للمنزل
   officePrice  Int      // سعر التوصيل للمكتب
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@map("shipping_prices")
+}
+
+// ================================
+// 📊 إحصائيات (اختياري)
+// ================================
+model DashboardStat {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  date          DateTime @unique
+  totalOrders   Int      @default(0)
+  totalRevenue  Float    @default(0)
+  newCustomers  Int      @default(0)
+  totalCustomers Int     @default(0)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ================================
+// ⚙️ الإعدادات
+// ================================
+model Settings {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  siteName      String
+  siteUrl       String
+  description   String?
+  email         String
+  phone         String
+  address       String?
+  
+  facebookUrl   String?
+  instagramUrl  String?
+  tiktokUrl     String?
+  whatsappUrl   String?
+  
+  shippingEnabled Boolean @default(true)
+  minOrderAmount  Float?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
