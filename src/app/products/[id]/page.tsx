@@ -543,3 +543,69 @@ export default function ProductDetailPage() {
                       customerName: name,
                       rating: parseInt(rating),
                       comment: comment,
+                      productName: product.nameAr,
+                    })
+                  })
+                  .then(r => r.json())
+                  .then(() => {
+                    toast.success('شكراً! تقييمك قيد المراجعة وسيظهر قريباً ✅');
+                    (e.target as HTMLFormElement).reset();
+                  })
+                  .catch(() => toast.error('حدث خطأ'));
+                }}
+              >
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">اسمك</label>
+                  <input
+                    type="text"
+                    name="name"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                    placeholder="أدخل اسمك"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">التقييم</label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <label key={star} className="cursor-pointer">
+                        <input type="radio" name="rating" value={star} className="sr-only peer" required />
+                        <Star className="w-10 h-10 text-gray-300 peer-checked:text-yellow-400 peer-checked:fill-yellow-400 hover:scale-110 transition" />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">تعليقك</label>
+                  <textarea
+                    name="comment"
+                    rows={5}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition resize-none"
+                    placeholder="أخبرنا عن تجربتك مع المنتج..."
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg hover:shadow-xl"
+                >
+                  إرسال التقييم ⭐
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        .font-arabic { font-family: 'Cairo', sans-serif !important; }
+      `}</style>
+    </div>
+  );
+}
