@@ -8,22 +8,23 @@ export async function PUT(
   try {
     const body = await request.json();
 
-    console.log('📦 Updating product with data:', {
-      id: params.id,
-      nameAr: body.nameAr,
-      attributes: body.attributes,
-      specifications: body.specifications,
-      imagesCount: body.images?.length
-    });
+    console.log('📦 Updating product with separate color stock:', body.attributes);
 
-    // تحديث المخزون حسب الألوان
+    // تحديث المخزون حسب الألوان (منفصل)
     const colorStock: Record<string, number> = {};
+    let totalStock = 0;
+
     if (body.attributes?.colors && Array.isArray(body.attributes.colors)) {
       body.attributes.colors.forEach((color: string) => {
-        // الحفاظ على المخزون القديم أو توزيع الجديد
-        const existingStock = body.attributes?.colorStock?.[color];
-        colorStock[color] = existingStock || Math.floor(body.stock / body.attributes.colors.length) || body.stock;
+        // الحفاظ على المخزون القديم أو استخدام الجديد
+        const stockForColor = body.attributes?.colorStock?.[color] || 
+                             Math.floor(body.stock / body.attributes.colors.length) || 
+                             body.stock;
+        colorStock[color] = stockForColor;
+        totalStock += stockForColor;
       });
+    } else {
+      totalStock = body.stock;
     }
 
     const product = await prisma.product.update({
@@ -35,7 +36,7 @@ export async function PUT(
         specifications: body.specifications || null,
         price: body.price,
         salePrice: body.salePrice || null,
-        stock: body.stock,
+        stock: totalStock, // استخدام المجموع الحقيقي
         images: body.images || [],
         category: body.category,
         categoryId: body.categoryId,
@@ -52,11 +53,7 @@ export async function PUT(
       },
     });
 
-    console.log('✅ Product updated successfully:', {
-      id: product.id,
-      nameAr: product.nameAr,
-      attributes: product.attributes
-    });
+    console.log('✅ Product updated with separate color stock:', product.attributes);
 
     return NextResponse.json(product);
   } catch (error) {
