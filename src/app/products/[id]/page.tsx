@@ -473,7 +473,7 @@ export default function ProductDetailPage() {
               <div className="flex gap-3 mb-6">
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.stock === 0 || (selectedColor && getColorStock(selectedColor) === 0)}
+disabled={product.stock === 0 || (!!selectedColor && getColorStock(selectedColor) === 0)}
                   className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="w-6 h-6" />
