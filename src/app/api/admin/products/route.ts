@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
 
-    const where: any = {};
+    const where: any = { enabled: true }; // فقط المنتجات المفعلة
 
     if (category && category !== 'all') {
       where.category = category;
@@ -43,7 +43,15 @@ export async function POST(request: NextRequest) {
       imagesCount: body.images?.length
     });
 
-    // التأكد من القيم الافتراضية مع إضافة attributes و specifications
+    // إنشاء هيكل المخزون حسب الألوان
+    const colorStock: Record<string, number> = {};
+    if (body.attributes?.colors && Array.isArray(body.attributes.colors)) {
+      body.attributes.colors.forEach((color: string) => {
+        // توزيع المخزون الإجمالي على الألوان (يمكن تعديل هذا المنطق)
+        colorStock[color] = Math.floor(body.stock / body.attributes.colors.length) || body.stock;
+      });
+    }
+
     const productData = {
       name: body.name,
       nameAr: body.nameAr,
@@ -62,8 +70,12 @@ export async function POST(request: NextRequest) {
       enabled: body.enabled !== undefined ? body.enabled : true,
       rating: body.rating || 5,
       sales: body.sales || 0,
-      // إضافة attributes و specifications
-      attributes: body.attributes || {},
+      attributes: {
+        colors: body.attributes?.colors || [],
+        colorStock: colorStock,
+        // الحفاظ على البيانات الأخرى
+        ...(body.attributes || {})
+      },
     };
 
     const product = await prisma.product.create({
@@ -73,8 +85,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Product created successfully:', {
       id: product.id,
       nameAr: product.nameAr,
-      attributes: product.attributes,
-      specifications: product.specifications
+      attributes: product.attributes
     });
 
     return NextResponse.json(product, { status: 201 });
