@@ -30,7 +30,7 @@ model Product {
   badge           String?
   enabled         Boolean  @default(true)
   specifications  String?  // ✅ جديد - آمن
-  attributes      Json?    // ✅ جديد - آمن
+  attributes      Json?    // ✅ جديد - آمن (سيحتوي على colors و colorStock)
   
   reviews         Review[]
   orderItems      OrderItem[]
@@ -83,7 +83,7 @@ model OrderItem {
   productName String
   quantity    Int
   price       Float
-  attributes  Json?   // ✅ جديد - آمن
+  attributes  Json?   // ✅ جديد - آمن (سيحتوي على color المختار)
   
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product @relation(fields: [productId], references: [id])
