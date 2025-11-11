@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
 
-    const where: any = { enabled: true }; // فقط المنتجات المفعلة
+    const where: any = {};
 
     if (category && category !== 'all') {
       where.category = category;
@@ -36,20 +36,23 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    console.log('📦 Creating product with data:', {
-      nameAr: body.nameAr,
-      attributes: body.attributes,
-      specifications: body.specifications,
-      imagesCount: body.images?.length
-    });
+    console.log('📦 Creating product with separate color stock:', body.attributes);
 
-    // إنشاء هيكل المخزون حسب الألوان
+    // إنشاء هيكل المخزون حسب الألوان (منفصل)
     const colorStock: Record<string, number> = {};
+    let totalStock = 0;
+
     if (body.attributes?.colors && Array.isArray(body.attributes.colors)) {
+      // استخدام المخزون المحدد لكل لون إذا وجد، وإلا استخدام التوزيع
       body.attributes.colors.forEach((color: string) => {
-        // توزيع المخزون الإجمالي على الألوان (يمكن تعديل هذا المنطق)
-        colorStock[color] = Math.floor(body.stock / body.attributes.colors.length) || body.stock;
+        const stockForColor = body.attributes?.colorStock?.[color] || 
+                             Math.floor(body.stock / body.attributes.colors.length) || 
+                             body.stock;
+        colorStock[color] = stockForColor;
+        totalStock += stockForColor;
       });
+    } else {
+      totalStock = body.stock;
     }
 
     const productData = {
@@ -59,7 +62,7 @@ export async function POST(request: NextRequest) {
       specifications: body.specifications || null,
       price: body.price,
       salePrice: body.salePrice || null,
-      stock: body.stock,
+      stock: totalStock, // استخدام المجموع الحقيقي
       images: body.images || [],
       category: body.category,
       categoryId: body.categoryId,
@@ -72,8 +75,7 @@ export async function POST(request: NextRequest) {
       sales: body.sales || 0,
       attributes: {
         colors: body.attributes?.colors || [],
-        colorStock: colorStock,
-        // الحفاظ على البيانات الأخرى
+        colorStock: colorStock, // إضافة المخزون حسب الألوان
         ...(body.attributes || {})
       },
     };
@@ -82,11 +84,7 @@ export async function POST(request: NextRequest) {
       data: productData,
     });
 
-    console.log('✅ Product created successfully:', {
-      id: product.id,
-      nameAr: product.nameAr,
-      attributes: product.attributes
-    });
+    console.log('✅ Product created with separate color stock:', product.attributes);
 
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
