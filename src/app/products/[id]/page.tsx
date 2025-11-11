@@ -1,4 +1,3 @@
-// src/app/products/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,13 +19,13 @@ import toast from 'react-hot-toast';
 const colorMap: Record<string, string> = {
   'أبيض': '#FFFFFF',
   'أسود': '#000000',
-  'أحمر': '#EF4444', 
-  'أزرق': '#3B82F6', 
-  'أخضر': '#10B981', 
-  'أصفر': '#F59E0B', 
-  'وردي': '#EC4899', 
-  'رمادي': '#6B7280', 
-  'بني': '#964B00',  
+  'أحمر': '#EF4444',
+  'أزرق': '#3B82F6',
+  'أخضر': '#10B981',
+  'أصفر': '#F59E0B',
+  'وردي': '#EC4899',
+  'رمادي': '#6B7280',
+  'بني': '#964B00',
 };
 
 const getColorCode = (colorName: string): string => {
@@ -69,7 +68,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  // 🆕 الحالة الجديدة لتخزين اللون المختار
+  // الحالة الجديدة لتخزين اللون المختار
   const [selectedColor, setSelectedColor] = useState<string | null>(null); 
   
   const { addToCart, getCartCount } = useCart();
@@ -94,13 +93,12 @@ export default function ProductDetailPage() {
       console.log('✅ Product loaded:', data);
       setProduct(data);
 
-      // 🆕 تعيين اللون الافتراضي: أول لون متوفر
+      // تعيين اللون الافتراضي: أول لون متوفر
       if (data.variants && data.variants.length > 0) {
         // نختار أول لون متوفر في المخزون
         const firstAvailableColor = data.variants.find(v => v.stock > 0)?.color || data.variants[0].color;
         setSelectedColor(firstAvailableColor);
       }
-      // ------------------------------------
       
     } catch (error) {
       console.error('❌ Error fetching product:', error);
@@ -114,21 +112,23 @@ export default function ProductDetailPage() {
   const handleAddToCart = () => {
     if (!product) return;
     
-    // 🆕 تحقق من اختيار اللون إذا كان المنتج يتطلب ذلك
+    // تحقق من اختيار اللون إذا كان المنتج يتطلب ذلك
     if (product.variants && product.variants.length > 0 && !selectedColor) {
       toast.error('الرجاء اختيار لون المنتج أولاً');
       return;
     }
 
     // ******************************************************
-    // ✅ الحل النهائي: تمرير خصائص المنتج مدمجة مع الكمية واللون.
-    // هذا يتطلب أن تكون واجهة CartItem هي: interface CartItem extends Product { quantity: number; color: string | null; }
+    // ✅ الحل النهائي المصحح: استدعاء addToCart بالوسائط المنفصلة
+    // (product, quantity, size (undefined), color)
+    // هذا يتوافق مع تعريف دالة addToCart في CartContext.tsx
     // ******************************************************
-    addToCart({ 
-        ...product,            // نشر جميع خصائص كائن المنتج (id, nameAr, price, etc.)
-        quantity: quantity,       // إضافة الكمية
-        color: selectedColor,     // إضافة اللون المختار
-    });
+    addToCart(
+      product,                  // الوسيط 1: Product
+      quantity,                // الوسيط 2: quantity
+      undefined,               // الوسيط 3: size (نفترض عدم استخدام المقاسات هنا)
+      selectedColor || undefined // الوسيط 4: color
+    );
     
     toast.success(`تمت إضافة ${quantity} من ${product.nameAr} للسلة ✅`);
   };
@@ -198,7 +198,7 @@ const getProductImage = (images: string[] | undefined) => {
     );
   }
 
-  // 🆕 تحديد المخزون الفعلي بناءً على اللون المختار
+  // تحديد المخزون الفعلي بناءً على اللون المختار
   const currentVariant = product.variants?.find((v) => v.color === selectedColor);
   // نستخدم مخزون المتغير إذا كان متاحاً، وإلا نستخدم المخزون العام للمنتج
   const currentStock = currentVariant ? currentVariant.stock : product.stock; 
