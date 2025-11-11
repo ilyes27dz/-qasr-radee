@@ -11,6 +11,26 @@ import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 import toast from 'react-hot-toast';
 
+// خريطة الألوان
+const colorMap: Record<string, string> = {
+  'أبيض': '#FFFFFF',
+  'أسود': '#000000',
+  'أزرق': '#007BFF',
+  'وردي': '#FFC0CB',
+  'أحمر': '#DC3545',
+  'أصفر': '#FFC107',
+  'أخضر': '#28A745',
+  'برتقالي': '#FD7E14',
+  'بنفسجي': '#6F42C1',
+  'رمادي': '#6C757D',
+  'بيج': '#F5F5DC',
+  'بني': '#A52A2A',
+};
+
+const getColorCode = (colorName: string): string => {
+  return colorMap[colorName] || '#CCCCCC';
+};
+
 const categories = [
   { id: 'all', name: 'الكل', icon: '🛍️' },
   { id: 'للتغذية', name: 'للتغذية', icon: '🍼' },
@@ -117,6 +137,24 @@ export default function ProductsPage() {
     return validImage || null;
   };
 
+  // دالة للحصول على المخزون حسب اللون
+  const getColorStock = (product: any, color: string) => {
+    if (!product.attributes?.colorStock) return product.stock;
+    return product.attributes.colorStock[color] || 0;
+  };
+
+  // دالة للحصول على الألوان المتاحة (التي لديها مخزون)
+  const getAvailableColors = (product: any) => {
+    if (!product.attributes?.colors) return [];
+    return product.attributes.colors.filter((color: string) => getColorStock(product, color) > 0);
+  };
+
+  // دالة للحصول على الألوان للعرض (أول 3 ألوان)
+  const getDisplayColors = (product: any) => {
+    const availableColors = getAvailableColors(product);
+    return availableColors.slice(0, 3);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-arabic">
       {/* Header - مصحح ✅ */}
@@ -220,6 +258,8 @@ export default function ProductsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
               {Array.isArray(products) && products.map((product, index) => {
                 const productImage = getProductImage(product.images);
+                const displayColors = getDisplayColors(product);
+                const totalColors = getAvailableColors(product).length;
                 
                 return (
                   <div
@@ -282,6 +322,48 @@ export default function ProductsPage() {
                         {product.descriptionAr}
                       </p>
 
+                      {/* عرض الألوان والمخزون */}
+                      {displayColors.length > 0 && (
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-gray-700">الألوان المتاحة:</span>
+                            <div className="flex flex-wrap gap-1">
+                              {displayColors.map((color: string) => (
+                                <div
+                                  key={color}
+                                  className="relative group"
+                                  title={`${color} (${getColorStock(product, color)} متوفر)`}
+                                >
+                                  <div
+                                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                                    style={{ backgroundColor: getColorCode(color) }}
+                                  />
+                                  <div className="absolute -bottom-1 -right-1 bg-gray-800 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {getColorStock(product, color)}
+                                  </div>
+                                </div>
+                              ))}
+                              {totalColors > 3 && (
+                                <div className="w-6 h-6 bg-gray-100 rounded-full border flex items-center justify-center">
+                                  <span className="text-xs text-gray-600">+{totalColors - 3}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* عرض المخزون الإجمالي */}
+                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <span className="font-semibold">المخزون الإجمالي:</span>
+                            <span className={`font-bold ${
+                              product.stock > 10 ? 'text-green-600' : 
+                              product.stock > 0 ? 'text-orange-600' : 'text-red-600'
+                            }`}>
+                              {product.stock} قطعة
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-1 mb-4">
                         {[...Array(5)].map((_, i) => (
                           <Star
@@ -315,9 +397,10 @@ export default function ProductsPage() {
 
                       <button
                         onClick={() => handleAddToCart(product)}
-                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-indigo-700 transition shadow-xl hover:shadow-2xl hover:scale-105"
+                        disabled={product.stock === 0}
+                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-indigo-700 transition shadow-xl hover:shadow-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        أضف للسلة 🛒
+                        {product.stock > 0 ? 'أضف للسلة 🛒' : 'نفذت الكمية'}
                       </button>
                     </div>
                   </div>
