@@ -124,7 +124,7 @@ export default function ProductsManagementPage() {
     badge: '',
     featured: false,
     enabled: true,
-    attributes: { colors: [] } as Record<string, any>,
+    attributes: { colors: [], colorStock: {} } as Record<string, any>,
   });
 
   useEffect(() => {
@@ -323,7 +323,7 @@ export default function ProductsManagementPage() {
       badge: product.badge || '',
       featured: product.featured,
       enabled: product.enabled,
-      attributes: product.attributes || { colors: [] },
+      attributes: product.attributes || { colors: [], colorStock: {} },
     });
     setShowModal(true);
   };
@@ -346,7 +346,7 @@ export default function ProductsManagementPage() {
       badge: '',
       featured: false,
       enabled: true,
-      attributes: { colors: [] },
+      attributes: { colors: [], colorStock: {} },
     });
   };
 
@@ -378,6 +378,7 @@ export default function ProductsManagementPage() {
   const getCategoryAttributes = () => {
     return categorySpecifications[formData.category] || [];
   };
+
   return (
     <div className="min-h-screen bg-gray-50 font-arabic">
       {/* Header */}
@@ -597,9 +598,24 @@ export default function ProductsManagementPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${stockStatus.color}`}>
-                            {product.stock} {stockStatus.label}
-                          </span>
+                          <div className="space-y-1">
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${stockStatus.color}`}>
+                              {product.stock} {stockStatus.label}
+                            </span>
+                            {product.attributes?.colorStock && (
+                              <div className="text-xs text-gray-500">
+                                {Object.entries(product.attributes.colorStock).map(([color, stock]) => (
+                                  <div key={color} className="flex items-center gap-1">
+                                    <div
+                                      className="w-3 h-3 rounded-full border border-gray-300"
+                                      style={{ backgroundColor: getColorCode(color) }}
+                                    />
+                                    <span>{color}: {stock as number}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-1">
@@ -821,7 +837,7 @@ export default function ProductsManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold mb-2">المخزون *</label>
+                  <label className="block font-bold mb-2">المخزون الإجمالي</label>
                   <input
                     type="number"
                     required
@@ -829,7 +845,9 @@ export default function ProductsManagementPage() {
                     onChange={(e) => setFormData({...formData, stock: Number(e.target.value)})}
                     placeholder="50"
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    readOnly
                   />
+                  <p className="text-xs text-gray-500 mt-1">يتم حسابه تلقائياً من مخزون الألوان</p>
                 </div>
               </div>
 
@@ -844,7 +862,7 @@ export default function ProductsManagementPage() {
                       setFormData({
                         ...formData, 
                         category: e.target.value,
-                        attributes: {},
+                        attributes: { colors: [], colorStock: {} },
                         categoryId: categories.findIndex(c => c.id === e.target.value).toString()
                       });
                     }}
@@ -934,6 +952,53 @@ export default function ProductsManagementPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Color Stock Management */}
+                  {formData.attributes?.colors?.length > 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
+                      <h4 className="font-bold text-yellow-800 mb-3">📊 إدارة المخزون حسب الألوان</h4>
+                      <div className="grid gap-3">
+                        {formData.attributes.colors.map((color: string) => (
+                          <div key={color} className="flex items-center gap-3 bg-white p-3 rounded-lg border">
+                            <div 
+                              className="w-6 h-6 rounded-full border border-gray-300"
+                              style={{ backgroundColor: getColorCode(color) }}
+                            />
+                            <span className="font-semibold flex-1">{color}</span>
+                            <input
+                              type="number"
+                              placeholder="الكمية"
+                              value={formData.attributes?.colorStock?.[color] || 0}
+                              onChange={(e) => {
+                                const newColorStock = {
+                                  ...formData.attributes?.colorStock,
+                                  [color]: parseInt(e.target.value) || 0
+                                };
+                                
+                                // حساب المخزون الإجمالي
+                                const totalStock = Object.values(newColorStock).reduce((sum: number, stock: any) => sum + stock, 0);
+                                
+                                setFormData({
+                                  ...formData,
+                                  attributes: {
+                                    ...formData.attributes,
+                                    colorStock: newColorStock
+                                  },
+                                  stock: totalStock // تحديث المخزون الإجمالي
+                                });
+                              }}
+                              className="w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                              min="0"
+                            />
+                            <span className="text-sm text-gray-500">قطعة</span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-sm text-yellow-700 mt-2">
+                        المخزون الإجمالي: {formData.stock} قطعة
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
