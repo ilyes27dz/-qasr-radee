@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import toast from 'react-hot-toast';
 
 // تعريف الأنواع مباشرة في الملف
 interface Product {
@@ -205,10 +206,4 @@ export function useCart() {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;
-}
-
-// دالة toast مساعدة
-function toast(error: string) {
-  // يمكنك استبدال هذا بتنفيذ toast الفعلي
-  console.error(error);
 }
