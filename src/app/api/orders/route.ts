@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createNotification } from '@/lib/notifications';
 
+// تعريف نوع للـ attributes
+interface ProductAttributes {
+  colors?: string[];
+  colorStock?: Record<string, number>;
+}
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -41,9 +47,12 @@ export async function POST(request: Request) {
         );
       }
 
+      // تحويل attributes إلى النوع المحدد
+      const attributes = product.attributes as ProductAttributes | null;
+
       // إذا كان هناك لون محدد، نتحقق من مخزون هذا اللون
-      if (item.color && product.attributes?.colorStock) {
-        const colorStock = product.attributes.colorStock[item.color] || 0;
+      if (item.color && attributes?.colorStock) {
+        const colorStock = attributes.colorStock[item.color] || 0;
         if (colorStock < item.quantity) {
           return NextResponse.json(
             { 
@@ -112,6 +121,9 @@ export async function POST(request: Request) {
       });
 
       if (product) {
+        // تحويل attributes إلى النوع المحدد
+        const attributes = product.attributes as ProductAttributes | null;
+        
         let updateData: any = {
           stock: {
             decrement: item.quantity,
@@ -122,14 +134,14 @@ export async function POST(request: Request) {
         };
 
         // إذا كان هناك لون محدد، نخصم من مخزون هذا اللون
-        if (item.color && product.attributes?.colorStock) {
-          const currentColorStock = product.attributes.colorStock[item.color] || 0;
+        if (item.color && attributes?.colorStock) {
+          const currentColorStock = attributes.colorStock[item.color] || 0;
           const newColorStock = Math.max(0, currentColorStock - item.quantity);
           
           updateData.attributes = {
-            ...product.attributes,
+            ...attributes,
             colorStock: {
-              ...product.attributes.colorStock,
+              ...attributes.colorStock,
               [item.color]: newColorStock,
             },
           };
