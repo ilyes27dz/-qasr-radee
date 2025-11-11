@@ -36,24 +36,50 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // التأكد من القيم الافتراضية
+    console.log('📦 Creating product with data:', {
+      nameAr: body.nameAr,
+      attributes: body.attributes,
+      specifications: body.specifications,
+      imagesCount: body.images?.length
+    });
+
+    // التأكد من القيم الافتراضية مع إضافة attributes و specifications
     const productData = {
-      ...body,
+      name: body.name,
+      nameAr: body.nameAr,
+      descriptionAr: body.descriptionAr,
+      specifications: body.specifications || null,
+      price: body.price,
+      salePrice: body.salePrice || null,
+      stock: body.stock,
+      images: body.images || [],
+      category: body.category,
+      categoryId: body.categoryId,
+      ageGroup: body.ageGroup,
+      gender: body.gender,
+      badge: body.badge || null,
+      featured: body.featured || false,
+      enabled: body.enabled !== undefined ? body.enabled : true,
       rating: body.rating || 5,
       sales: body.sales || 0,
-      enabled: body.enabled !== undefined ? body.enabled : true,
-      featured: body.featured || false,
+      // إضافة attributes و specifications
+      attributes: body.attributes || {},
     };
 
     const product = await prisma.product.create({
       data: productData,
     });
 
-    console.log('✅ Product created:', product.nameAr);
+    console.log('✅ Product created successfully:', {
+      id: product.id,
+      nameAr: product.nameAr,
+      attributes: product.attributes,
+      specifications: product.specifications
+    });
 
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
-    console.error('Error creating product:', error);
+    console.error('❌ Error creating product:', error);
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
   }
 }
