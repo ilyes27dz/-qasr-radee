@@ -21,6 +21,10 @@ interface Product {
   rating: number;
   createdAt: Date;
   updatedAt: Date;
+  attributes?: {
+    colors?: string[];
+    colorStock?: Record<string, number>;
+  };
 }
 
 interface CartItem {
@@ -33,11 +37,12 @@ interface CartItem {
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (product: Product, quantity?: number, size?: string, color?: string) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeFromCart: (productId: string, color?: string) => void;
+  updateQuantity: (productId: string, quantity: number, color?: string) => void;
   clearCart: () => void;
   getCartTotal: () => number;
   getCartCount: () => number;
+  getItemQuantity: (productId: string, color?: string) => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -77,19 +82,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [cartItems, isLoaded]);
 
+  // إنشاء مفتاح فريد للمنتج مع اللون
+  const getItemKey = (productId: string, color?: string) => {
+    return color ? `${productId}-${color}` : productId;
+  };
+
   // إضافة منتج للسلة
   const addToCart = (product: Product, quantity = 1, size?: string, color?: string) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find(
-        (item) => 
-          item.product.id === product.id && 
-          item.size === size && 
-          item.color === color
+      const itemKey = getItemKey(product.id, color);
+      const existingItem = prevItems.find(item => 
+        getItemKey(item.product.id, item.color) === itemKey
       );
 
       if (existingItem) {
         return prevItems.map((item) =>
-          item.product.id === product.id && item.size === size && item.color === color
+          getItemKey(item.product.id, item.color) === itemKey
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
@@ -100,22 +108,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   // حذف منتج من السلة
-  const removeFromCart = (productId: string) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.product.id !== productId));
+  const removeFromCart = (productId: string, color?: string) => {
+    setCartItems((prevItems) => 
+      prevItems.filter((item) => 
+        getItemKey(item.product.id, item.color) !== getItemKey(productId, color)
+      )
+    );
   };
 
   // تحديث كمية المنتج
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (productId: string, quantity: number, color?: string) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, color);
       return;
     }
 
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
+        getItemKey(item.product.id, item.color) === getItemKey(productId, color)
+          ? { ...item, quantity }
+          : item
       )
     );
+  };
+
+  // الحصول على كمية منتج معين
+  const getItemQuantity = (productId: string, color?: string) => {
+    const item = cartItems.find(item => 
+      getItemKey(item.product.id, item.color) === getItemKey(productId, color)
+    );
+    return item ? item.quantity : 0;
   };
 
   // مسح السلة بالكامل
@@ -146,6 +168,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         getCartTotal,
         getCartCount,
+        getItemQuantity,
       }}
     >
       {children}
