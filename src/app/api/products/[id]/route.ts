@@ -68,9 +68,24 @@ export async function PUT(
   try {
     const body = await request.json();
 
+    // دعم تحديث نظام الألوان
+    const updateData = {
+      ...body,
+      attributes: body.attributes ? {
+        ...body.attributes,
+        // تحديث colorStock إذا كانت هناك ألوان جديدة
+        colorStock: body.attributes.colors ? 
+          body.attributes.colors.reduce((acc: any, color: string) => {
+            // الحفاظ على المخزون القديم أو استخدام الجديد
+            acc[color] = body.attributes?.colorStock?.[color] || body.stock;
+            return acc;
+          }, {}) : body.attributes.colorStock
+      } : body.attributes
+    };
+
     const product = await prisma.product.update({
       where: { id: params.id },
-      data: body,
+      data: updateData,
     });
 
     console.log('✅ Product updated:', product.nameAr);
