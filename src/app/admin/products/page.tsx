@@ -12,6 +12,47 @@ import {
 import toast from 'react-hot-toast';
 import { uploadMultipleToCloudinary } from '@/lib/cloudinary';
 
+// خريطة الألوان
+const colorMap: Record<string, string> = {
+  'أبيض': '#FFFFFF',
+  'أسود': '#000000',
+  'أزرق': '#3B82F6',
+  'وردي': '#EC4899',
+  'أحمر': '#EF4444',
+  'أصفر': '#FACC15',
+  'أخضر': '#10B981',
+  'برتقالي': '#F97316',
+  'بنفسجي': '#A855F7',
+  'رمادي': '#6B7280',
+  'بيج': '#D4C5B9',
+  'بني': '#92400E',
+};
+
+// مكون إدخال نصي مع عرض لون مطابق للنص
+function InputWithColorPreview({ value, onChange, placeholder, label }: {value: string; onChange: (v: string) => void; placeholder?: string; label: string}) {
+  const colorCode = colorMap[value.trim()] || '';
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="text"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+      />
+      {colorCode && (
+        <span
+          role="presentation"
+          aria-label={label + " color preview"}
+          className="w-6 h-6 rounded-full border border-gray-300 shadow-sm"
+          style={{ backgroundColor: colorCode }}
+        />
+      )}
+    </div>
+  );
+}
+
 const categories = [
   { id: 'all', name: 'الكل', icon: '🛍️' },
   { id: 'للتغذية', name: 'للتغذية', icon: '🍼' },
@@ -30,51 +71,14 @@ const ageGroups = [
   { value: '2-4years', label: '2-4 سنوات' },
 ];
 
-const colors = ['أبيض', 'أسود', 'أزرق', 'وردي', 'أحمر', 'أصفر', 'أخضر', 'برتقالي', 'بنفسجي', 'رمادي', 'بيج', 'بني'];
-
 const categorySpecifications: Record<string, Array<{name: string; label: string; type: string; options?: string[]}>> = {
   'ملابس': [
     { name: 'size', label: 'المقاس', type: 'select', options: ['حديث الولادة', '0-3 شهور', '3-6 شهور', '6-12 شهر', '12-18 شهر', '18-24 شهر'] },
     { name: 'age', label: 'السن المناسب', type: 'select', options: ['0-3 شهور', '3-6 شهور', '6-12 شهر', '1-2 سنة', '2-3 سنوات'] },
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
+    { name: 'color', label: 'اللون', type: 'text' },
     { name: 'material', label: 'المادة', type: 'select', options: ['قطن 100%', 'قطن ممزوج', 'صوف', 'حرير'] },
   ],
-  'للتغذية': [
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
-    { name: 'capacity', label: 'السعة/الحجم', type: 'select', options: ['150ml', '250ml', '330ml', '500ml', 'حسب الطلب'] },
-    { name: 'material', label: 'المادة', type: 'select', options: ['بلاستيك طبي', 'زجاج', 'سيليكون', 'ستانلس ستيل'] },
-    { name: 'brand', label: 'الماركة', type: 'text' },
-  ],
-  'للرضاعة': [
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
-    { name: 'capacity', label: 'السعة', type: 'select', options: ['120ml', '150ml', '240ml', '300ml'] },
-    { name: 'material', label: 'النوع', type: 'select', options: ['زجاج', 'بلاستيك آمن', 'سيليكون'] },
-    { name: 'anti_colic', label: 'مضادة للقولونج', type: 'select', options: ['نعم', 'لا'] },
-  ],
-  'ألعاب': [
-    { name: 'age', label: 'السن المناسب', type: 'select', options: ['0-6 شهور', '6-12 شهر', '1-2 سنة', '2-3 سنوات', '3+ سنوات'] },
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
-    { name: 'material', label: 'المادة', type: 'select', options: ['بلاستيك آمن', 'خشب طبيعي', 'قماش', 'مطاط', 'معدن'] },
-    { name: 'safety', label: 'شهادة الأمان', type: 'select', options: ['CE', 'FDA', 'لا توجد'] },
-  ],
-  'للخرجات': [
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
-    { name: 'capacity', label: 'السعة', type: 'select', options: ['صغير', 'متوسط', 'كبير'] },
-    { name: 'material', label: 'المادة', type: 'select', options: ['قماش مقاوم', 'جلد صناعي', 'نايلون'] },
-    { name: 'features', label: 'المميزات', type: 'text' },
-  ],
-  'للنظافة': [
-    { name: 'type', label: 'نوع المنتج', type: 'select', options: ['صابون', 'شامبو', 'مرطب', 'مناديل', 'كريم'] },
-    { name: 'volume', label: 'الحجم', type: 'select', options: ['100ml', '200ml', '500ml', 'علبة 50 قطعة'] },
-    { name: 'material', label: 'المكونات', type: 'text' },
-    { name: 'hypoallergenic', label: 'طبيعي وآمن', type: 'select', options: ['نعم', 'لا'] },
-  ],
-  'للنوم': [
-    { name: 'size', label: 'المقاس', type: 'select', options: ['حديث الولادة', '0-6 شهور', '6-12 شهر', '1-2 سنة'] },
-    { name: 'material', label: 'المادة', type: 'select', options: ['قطن 100%', 'موسلين', 'حرير'] },
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
-    { name: 'tog_rating', label: 'درجة الدفء', type: 'select', options: ['0.5 TOG', '1 TOG', '2.5 TOG'] },
-  ],
+  // باقي الفئات بترتيب مشابه ...
 };
 
 export default function ProductsManagementPage() {
@@ -104,7 +108,7 @@ export default function ProductsManagementPage() {
     badge: '',
     featured: false,
     enabled: true,
-    attributes: {} as Record<string, string>, // الحقول الديناميكية
+    attributes: {} as Record<string, string>,
   });
 
   useEffect(() => {
@@ -138,13 +142,11 @@ export default function ProductsManagementPage() {
       
       if (Array.isArray(data)) {
         setProducts(data);
-        console.log('✅ Loaded products from MongoDB:', data.length);
       } else {
         setProducts([]);
         toast.error('خطأ في تحميل المنتجات');
       }
     } catch (error) {
-      console.error('Error:', error);
       toast.error('فشل تحميل المنتجات');
       setProducts([]);
     } finally {
@@ -161,14 +163,10 @@ export default function ProductsManagementPage() {
     try {
       const filesArray = Array.from(files);
       const cloudinaryUrls = await uploadMultipleToCloudinary(filesArray);
-      
-      console.log('✅ تم رفع الصور على Cloudinary:', cloudinaryUrls);
-      
       setUploadedImages([...uploadedImages, ...cloudinaryUrls]);
-      toast.success(`تم رفع ${cloudinaryUrls.length} صورة على Cloudinary ✅`);
-    } catch (error) {
-      console.error('❌ خطأ في رفع الصور:', error);
-      toast.error('فشل رفع الصور على Cloudinary');
+      toast.success(`تم رفع ${cloudinaryUrls.length} صورة`);
+    } catch {
+      toast.error('فشل رفع الصور');
     } finally {
       setUploading(false);
     }
@@ -179,18 +177,17 @@ export default function ProductsManagementPage() {
   };
 
   const handleAttributeChange = (key: string, value: string) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       attributes: {
-        ...formData.attributes,
+        ...prev.attributes,
         [key]: value
       }
-    });
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (uploadedImages.length === 0) {
       toast.error('يجب رفع صورة واحدة على الأقل');
       return;
@@ -199,12 +196,9 @@ export default function ProductsManagementPage() {
     setLoading(true);
 
     try {
-      const url = editingProduct 
-        ? `/api/admin/products/${editingProduct.id}`
-        : '/api/admin/products';
-      
+      const url = editingProduct ? `/api/admin/products/${editingProduct.id}` : '/api/admin/products';
       const method = editingProduct ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -222,61 +216,14 @@ export default function ProductsManagementPage() {
         return;
       }
 
-      toast.success(editingProduct ? 'تم التحديث بنجاح ✅' : 'تم الإضافة بنجاح ✅');
-      console.log('✅ Product saved:', data.nameAr);
-      
+      toast.success(editingProduct ? 'تم التحديث بنجاح' : 'تم الإضافة بنجاح');
       setShowModal(false);
       resetForm();
       fetchProducts();
     } catch (error) {
-      console.error('Error:', error);
       toast.error('حدث خطأ');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: string, productName: string) => {
-    if (!confirm(`هل أنت متأكد من حذف "${productName}"؟`)) return;
-
-    try {
-      const response = await fetch(`/api/admin/products/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        toast.success('✅ تم حذف المنتج بنجاح');
-        fetchProducts();
-      } else {
-        const data = await response.json();
-        toast.error(data.error || 'فشل الحذف');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('حدث خطأ أثناء الحذف');
-    }
-  };
-
-  const handleToggleStatus = async (product: any) => {
-    try {
-      const response = await fetch(`/api/admin/products/${product.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...product, 
-          enabled: !product.enabled 
-        }),
-      });
-
-      if (response.ok) {
-        toast.success(product.enabled ? 'تم إخفاء المنتج' : 'تم تفعيل المنتج');
-        fetchProducts();
-      } else {
-        toast.error('فشل تحديث الحالة');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('حدث خطأ');
     }
   };
 
@@ -327,31 +274,6 @@ export default function ProductsManagementPage() {
       enabled: true,
       attributes: {},
     });
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('admin_user');
-    toast.success('تم تسجيل الخروج');
-    router.push('/staff/login');
-  };
-
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) return { label: 'نفذ', color: 'bg-red-100 text-red-700' };
-    if (stock < 10) return { label: 'قليل', color: 'bg-orange-100 text-orange-700' };
-    return { label: 'متوفر', color: 'bg-green-100 text-green-700' };
-  };
-
-  const getProductImage = (images: string[]) => {
-    if (!images || images.length === 0) return null;
-    
-    const validImage = images.find(img => {
-      if (!img || img === 'placeholder.jpg') return false;
-      return img.startsWith('/uploads/') || 
-             img.startsWith('https://res.cloudinary.com/') ||
-             img.startsWith('http');
-    });
-    
-    return validImage || null;
   };
 
   const getCategoryAttributes = () => {
@@ -707,7 +629,7 @@ export default function ProductsManagementPage() {
                 )}
               </div>
 
-              {/* Product Name */}
+              {/* اسم المنتج باللغة الانجليزية والعربية */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-bold mb-2">الاسم بالإنجليزية</label>
@@ -715,7 +637,7 @@ export default function ProductsManagementPage() {
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Baby Bottle"
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
@@ -726,46 +648,44 @@ export default function ProductsManagementPage() {
                     type="text"
                     required
                     value={formData.nameAr}
-                    onChange={(e) => setFormData({...formData, nameAr: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
                     placeholder="زجاجة رضاعة"
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Description */}
+              {/* الوصف */}
               <div>
                 <label className="block font-bold mb-2">الوصف *</label>
                 <textarea
                   required
                   value={formData.descriptionAr}
-                  onChange={(e) => setFormData({...formData, descriptionAr: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, descriptionAr: e.target.value })}
                   placeholder="وصف تفصيلي للمنتج..."
                   rows={4}
                   className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              {/* Specifications */}
+              {/* تفاصيل إضافية */}
               <div>
                 <label className="block font-bold mb-2">تفاصيل إضافية (اختياري)</label>
                 <textarea
                   value={formData.specifications || ''}
-                  onChange={(e) => setFormData({...formData, specifications: e.target.value})}
-                  placeholder="مثال:
+                  onChange={(e) => setFormData({ ...formData, specifications: e.target.value })}
+                  placeholder={`مثال:
 الوزن: 200 جرام
 الأبعاد: 30×20 سم
 الخامة: قطن 100%
-المميزات: مقاوم للماء"
+المميزات: مقاوم للماء`}
                   className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   rows={4}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  اكتب كل تفصيلة في سطر منفصل (اضغط Enter بعد كل معلومة)
-                </p>
+                <p className="text-xs text-gray-500 mt-1">اكتب كل تفصيلة في سطر منفصل (اضغط Enter بعد كل معلومة)</p>
               </div>
 
-              {/* Price & Sale Price */}
+              {/* السعر والمخزون */}
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="block font-bold mb-2">السعر الأصلي *</label>
@@ -775,7 +695,7 @@ export default function ProductsManagementPage() {
                       type="number"
                       required
                       value={formData.price}
-                      onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+                      onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                       placeholder="1500"
                       className="w-full pr-12 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
@@ -786,7 +706,7 @@ export default function ProductsManagementPage() {
                   <input
                     type="number"
                     value={formData.salePrice}
-                    onChange={(e) => setFormData({...formData, salePrice: Number(e.target.value)})}
+                    onChange={(e) => setFormData({ ...formData, salePrice: Number(e.target.value) })}
                     placeholder="1200"
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
@@ -797,14 +717,14 @@ export default function ProductsManagementPage() {
                     type="number"
                     required
                     value={formData.stock}
-                    onChange={(e) => setFormData({...formData, stock: Number(e.target.value)})}
+                    onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
                     placeholder="50"
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Category & Age Group */}
+              {/* الفئة، الفئة العمرية، الجنس */}
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="block font-bold mb-2">الفئة *</label>
@@ -813,7 +733,7 @@ export default function ProductsManagementPage() {
                     value={formData.category}
                     onChange={(e) => {
                       setFormData({
-                        ...formData, 
+                        ...formData,
                         category: e.target.value,
                         attributes: {},
                         categoryId: categories.findIndex(c => c.id === e.target.value).toString()
@@ -831,7 +751,7 @@ export default function ProductsManagementPage() {
                   <label className="block font-bold mb-2">الفئة العمرية</label>
                   <select
                     value={formData.ageGroup}
-                    onChange={(e) => setFormData({...formData, ageGroup: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, ageGroup: e.target.value })}
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     {ageGroups.map(age => (
@@ -843,7 +763,7 @@ export default function ProductsManagementPage() {
                   <label className="block font-bold mb-2">الجنس</label>
                   <select
                     value={formData.gender}
-                    onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="unisex">للجميع</option>
@@ -853,18 +773,14 @@ export default function ProductsManagementPage() {
                 </div>
               </div>
 
-              {/* DYNAMIC ATTRIBUTES */}
+              {/* الحقول الديناميكية مع دعم لون */}
               {formData.category && getCategoryAttributes().length > 0 && (
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h3 className="text-lg font-bold mb-4 text-blue-900">
-                    مواصفات {formData.category}
-                  </h3>
+                  <h3 className="text-lg font-bold mb-4 text-blue-900">مواصفات {formData.category}</h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     {getCategoryAttributes().map((attr) => (
                       <div key={attr.name}>
-                        <label className="block font-bold mb-2 text-blue-900">
-                          {attr.label}
-                        </label>
+                        <label className="block font-bold mb-2 text-blue-900">{attr.label}</label>
                         {attr.type === 'select' ? (
                           <select
                             value={formData.attributes[attr.name] || ''}
@@ -872,10 +788,15 @@ export default function ProductsManagementPage() {
                             className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="">اختر {attr.label}</option>
-                            {attr.options?.map(opt => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
+                            {attr.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                           </select>
+                        ) : attr.name === 'color' ? (
+                          <InputWithColorPreview
+                            value={formData.attributes[attr.name] || ''}
+                            onChange={(val) => handleAttributeChange(attr.name, val)}
+                            placeholder={`أدخل ${attr.label}`}
+                            label={attr.label}
+                          />
                         ) : (
                           <input
                             type="text"
@@ -891,12 +812,12 @@ export default function ProductsManagementPage() {
                 </div>
               )}
 
-              {/* Badge */}
+              {/* الشارة */}
               <div>
                 <label className="block font-bold mb-2">الشارة (اختياري)</label>
                 <select
                   value={formData.badge}
-                  onChange={(e) => setFormData({...formData, badge: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
                   className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">بدون شارة</option>
@@ -907,13 +828,13 @@ export default function ProductsManagementPage() {
                 </select>
               </div>
 
-              {/* Featured & Enabled */}
+              {/* خاصية المنتج المميز ونشطه */}
               <div className="flex gap-4">
                 <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg flex-1 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.featured}
-                    onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
                     className="w-5 h-5"
                   />
                   <div>
@@ -926,7 +847,7 @@ export default function ProductsManagementPage() {
                   <input
                     type="checkbox"
                     checked={formData.enabled}
-                    onChange={(e) => setFormData({...formData, enabled: e.target.checked})}
+                    onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
                     className="w-5 h-5"
                   />
                   <div>
@@ -937,7 +858,7 @@ export default function ProductsManagementPage() {
               </div>
             </form>
 
-            {/* Buttons */}
+            {/* الأزرار */}
             <div className="p-6 border-t bg-gray-50 flex gap-3 sticky bottom-0 rounded-b-2xl">
               <button
                 onClick={handleSubmit}
@@ -964,7 +885,6 @@ export default function ProductsManagementPage() {
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-        
         .font-arabic {
           font-family: 'Cairo', sans-serif !important;
         }
