@@ -16,6 +16,16 @@ export async function PUT(
       imagesCount: body.images?.length
     });
 
+    // تحديث المخزون حسب الألوان
+    const colorStock: Record<string, number> = {};
+    if (body.attributes?.colors && Array.isArray(body.attributes.colors)) {
+      body.attributes.colors.forEach((color: string) => {
+        // الحفاظ على المخزون القديم أو توزيع الجديد
+        const existingStock = body.attributes?.colorStock?.[color];
+        colorStock[color] = existingStock || Math.floor(body.stock / body.attributes.colors.length) || body.stock;
+      });
+    }
+
     const product = await prisma.product.update({
       where: { id: params.id },
       data: {
@@ -34,16 +44,18 @@ export async function PUT(
         badge: body.badge || null,
         featured: body.featured,
         enabled: body.enabled,
-        // إضافة attributes و specifications
-        attributes: body.attributes || {},
+        attributes: {
+          colors: body.attributes?.colors || [],
+          colorStock: colorStock,
+          ...(body.attributes || {})
+        },
       },
     });
 
     console.log('✅ Product updated successfully:', {
       id: product.id,
       nameAr: product.nameAr,
-      attributes: product.attributes,
-      specifications: product.specifications
+      attributes: product.attributes
     });
 
     return NextResponse.json(product);
