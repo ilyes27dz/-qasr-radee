@@ -43,6 +43,7 @@ interface CartContextType {
   getCartTotal: () => number;
   getCartCount: () => number;
   getItemQuantity: (productId: string, color?: string) => number;
+  getAvailableStock: (product: Product, color?: string) => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -87,8 +88,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return color ? `${productId}-${color}` : productId;
   };
 
+  // الحصول على المخزون المتاح للمنتج حسب اللون
+  const getAvailableStock = (product: Product, color?: string) => {
+    if (color && product.attributes?.colorStock) {
+      return product.attributes.colorStock[color] || 0;
+    }
+    return product.stock;
+  };
+
   // إضافة منتج للسلة
   const addToCart = (product: Product, quantity = 1, size?: string, color?: string) => {
+    const availableStock = getAvailableStock(product, color);
+    
+    if (quantity > availableStock) {
+      toast.error(`الكمية المطلوبة غير متوفرة. المتوفر: ${availableStock} قطعة`);
+      return;
+    }
+    
     setCartItems((prevItems) => {
       const itemKey = getItemKey(product.id, color);
       const existingItem = prevItems.find(item => 
@@ -96,9 +112,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       );
 
       if (existingItem) {
+        const newQuantity = existingItem.quantity + quantity;
+        if (newQuantity > availableStock) {
+          toast.error(`الكمية الإجمالية تتجاوز المخزون المتوفر. المتوفر: ${availableStock} قطعة`);
+          return prevItems;
+        }
+        
         return prevItems.map((item) =>
           getItemKey(item.product.id, item.color) === itemKey
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: newQuantity }
             : item
         );
       }
@@ -169,6 +191,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         getCartTotal,
         getCartCount,
         getItemQuantity,
+        getAvailableStock,
       }}
     >
       {children}
@@ -182,4 +205,10 @@ export function useCart() {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;
+}
+
+// دالة toast مساعدة
+function toast(error: string) {
+  // يمكنك استبدال هذا بتنفيذ toast الفعلي
+  console.error(error);
 }
