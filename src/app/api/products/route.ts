@@ -87,8 +87,22 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // دعم نظام الألوان الجديد
+    const productData = {
+      ...body,
+      // إذا كان هناك ألوان، نقوم بإنشاء colorStock
+      attributes: body.attributes ? {
+        ...body.attributes,
+        colorStock: body.attributes.colors ? 
+          body.attributes.colors.reduce((acc: any, color: string) => {
+            acc[color] = body.stock; // توزيع المخزون على الألوان
+            return acc;
+          }, {}) : {}
+      } : {}
+    };
+
     const product = await prisma.product.create({
-      data: body,
+      data: productData,
     });
 
     console.log('✅ Product created:', product.id);
