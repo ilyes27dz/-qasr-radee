@@ -11,10 +11,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { uploadMultipleToCloudinary } from '@/lib/cloudinary';
+import MultiColorSelector from '@/components/MultiColorSelector';
 
-// ====================================================================
-// 🎨 وظيفة مساعدة لتحويل اسم اللون العربي إلى كود Hex
-// ====================================================================
 const colorMap: Record<string, string> = {
   'أبيض': '#FFFFFF',
   'أسود': '#000000',
@@ -31,10 +29,8 @@ const colorMap: Record<string, string> = {
 };
 
 const getColorCode = (colorName: string): string => {
-  return colorMap[colorName] || '#CCCCCC'; // رمادي فاتح كلون افتراضي
+  return colorMap[colorName] || '#CCCCCC';
 };
-// ====================================================================
-
 
 const categories = [
   { id: 'all', name: 'الكل', icon: '🛍️' },
@@ -54,36 +50,35 @@ const ageGroups = [
   { value: '2-4years', label: '2-4 سنوات' },
 ];
 
-const colors = Object.keys(colorMap); // استخدام مفاتيح خريطة الألوان لضمان التوافق
+const colors = Object.keys(colorMap);
 
 const categorySpecifications: Record<string, Array<{name: string; label: string; type: string; options?: string[]}>> = {
   'ملابس': [
     { name: 'size', label: 'المقاس', type: 'select', options: ['حديث الولادة', '0-3 شهور', '3-6 شهور', '6-12 شهر', '12-18 شهر', '18-24 شهر'] },
     { name: 'age', label: 'السن المناسب', type: 'select', options: ['0-3 شهور', '3-6 شهور', '6-12 شهر', '1-2 سنة', '2-3 سنوات'] },
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
+    { name: 'colors', label: 'الألوان المتاحة', type: 'multi-color' },
     { name: 'material', label: 'المادة', type: 'select', options: ['قطن 100%', 'قطن ممزوج', 'صوف', 'حرير'] },
   ],
   'للتغذية': [
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
+    { name: 'colors', label: 'الألوان المتاحة', type: 'multi-color' },
     { name: 'capacity', label: 'السعة/الحجم', type: 'select', options: ['150ml', '250ml', '330ml', '500ml', 'حسب الطلب'] },
     { name: 'material', label: 'المادة', type: 'select', options: ['بلاستيك طبي', 'زجاج', 'سيليكون', 'ستانلس ستيل'] },
     { name: 'brand', label: 'الماركة', type: 'text' },
   ],
   'للرضاعة': [
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
+    { name: 'colors', label: 'الألوان المتاحة', type: 'multi-color' },
     { name: 'capacity', label: 'السعة', type: 'select', options: ['120ml', '150ml', '240ml', '300ml'] },
     { name: 'material', label: 'النوع', type: 'select', options: ['زجاج', 'بلاستيك آمن', 'سيليكون'] },
     { name: 'anti_colic', label: 'مضادة للقولونج', type: 'select', options: ['نعم', 'لا'] },
   ],
-  // تم افتراض وجود 'ألعاب' لإبقاء مرجع الألوان
   'ألعاب': [ 
     { name: 'age', label: 'السن المناسب', type: 'select', options: ['0-6 شهور', '6-12 شهر', '1-2 سنة', '2-3 سنوات', '3+ سنوات'] },
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
+    { name: 'colors', label: 'الألوان المتاحة', type: 'multi-color' },
     { name: 'material', label: 'المادة', type: 'select', options: ['بلاستيك آمن', 'خشب طبيعي', 'قماش', 'مطاط', 'معدن'] },
     { name: 'safety', label: 'شهادة الأمان', type: 'select', options: ['CE', 'FDA', 'لا توجد'] },
   ],
   'للخرجات': [
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
+    { name: 'colors', label: 'الألوان المتاحة', type: 'multi-color' },
     { name: 'capacity', label: 'السعة', type: 'select', options: ['صغير', 'متوسط', 'كبير'] },
     { name: 'material', label: 'المادة', type: 'select', options: ['قماش مقاوم', 'جلد صناعي', 'نايلون'] },
     { name: 'features', label: 'المميزات', type: 'text' },
@@ -97,7 +92,7 @@ const categorySpecifications: Record<string, Array<{name: string; label: string;
   'للنوم': [
     { name: 'size', label: 'المقاس', type: 'select', options: ['حديث الولادة', '0-6 شهور', '6-12 شهر', '1-2 سنة'] },
     { name: 'material', label: 'المادة', type: 'select', options: ['قطن 100%', 'موسلين', 'حرير'] },
-    { name: 'color', label: 'اللون', type: 'select', options: colors },
+    { name: 'colors', label: 'الألوان المتاحة', type: 'multi-color' },
     { name: 'tog_rating', label: 'درجة الدفء', type: 'select', options: ['0.5 TOG', '1 TOG', '2.5 TOG'] },
   ],
 };
@@ -129,7 +124,7 @@ export default function ProductsManagementPage() {
     badge: '',
     featured: false,
     enabled: true,
-    attributes: {} as Record<string, string>, // الحقول الديناميكية
+    attributes: { colors: [] } as Record<string, any>,
   });
 
   useEffect(() => {
@@ -149,13 +144,12 @@ export default function ProductsManagementPage() {
     }
 
     fetchProducts();
-  }, [selectedCategory, searchQuery]); // إضافة التبعيات لتحديث القائمة عند تغيير الفلترة
+  }, [selectedCategory, searchQuery]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      // تم تغيير طريقة الفلترة لتتماشى مع الهيكل
       const selectedCatId = categories.find(c => c.name === selectedCategory)?.id || selectedCategory;
       if (selectedCatId !== 'all') params.append('category', selectedCatId); 
       if (searchQuery) params.append('search', searchQuery);
@@ -187,7 +181,6 @@ export default function ProductsManagementPage() {
 
     try {
       const filesArray = Array.from(files);
-      // تأكد من أن هذه الدالة تعمل بشكل صحيح وترجع روابط صور Cloudinary
       const cloudinaryUrls = await uploadMultipleToCloudinary(filesArray); 
       
       console.log('✅ تم رفع الصور على Cloudinary:', cloudinaryUrls);
@@ -206,7 +199,7 @@ export default function ProductsManagementPage() {
     setUploadedImages(uploadedImages.filter((_, i) => i !== index));
   };
 
-  const handleAttributeChange = (key: string, value: string) => {
+  const handleAttributeChange = (key: string, value: any) => {
     setFormData({
       ...formData,
       attributes: {
@@ -330,7 +323,7 @@ export default function ProductsManagementPage() {
       badge: product.badge || '',
       featured: product.featured,
       enabled: product.enabled,
-      attributes: product.attributes || {},
+      attributes: product.attributes || { colors: [] },
     });
     setShowModal(true);
   };
@@ -353,7 +346,7 @@ export default function ProductsManagementPage() {
       badge: '',
       featured: false,
       enabled: true,
-      attributes: {},
+      attributes: { colors: [] },
     });
   };
 
@@ -385,7 +378,6 @@ export default function ProductsManagementPage() {
   const getCategoryAttributes = () => {
     return categorySpecifications[formData.category] || [];
   };
-
   return (
     <div className="min-h-screen bg-gray-50 font-arabic">
       {/* Header */}
@@ -431,6 +423,7 @@ export default function ProductsManagementPage() {
       <div className="container mx-auto px-4 py-6">
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-4 mb-6">
+          {/* إجمالي المنتجات */}
           <div className="bg-white rounded-xl p-4 shadow-sm border">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -443,6 +436,7 @@ export default function ProductsManagementPage() {
             </div>
           </div>
 
+          {/* المنتجات النشطة */}
           <div className="bg-white rounded-xl p-4 shadow-sm border">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -457,6 +451,7 @@ export default function ProductsManagementPage() {
             </div>
           </div>
 
+          {/* المخزون المنخفض */}
           <div className="bg-white rounded-xl p-4 shadow-sm border">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -471,6 +466,7 @@ export default function ProductsManagementPage() {
             </div>
           </div>
 
+          {/* نفذ من المخزون */}
           <div className="bg-white rounded-xl p-4 shadow-sm border">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -509,7 +505,6 @@ export default function ProductsManagementPage() {
                   key={cat.id}
                   onClick={() => {
                     setSelectedCategory(cat.id);
-                    // يمكنك استدعاء fetchProducts مباشرة هنا أو الاعتماد على useEffect
                   }}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap font-semibold transition ${
                     selectedCategory === cat.id
@@ -849,7 +844,7 @@ export default function ProductsManagementPage() {
                       setFormData({
                         ...formData, 
                         category: e.target.value,
-                        attributes: {}, // إعادة تعيين السمات عند تغيير الفئة
+                        attributes: {},
                         categoryId: categories.findIndex(c => c.id === e.target.value).toString()
                       });
                     }}
@@ -887,7 +882,7 @@ export default function ProductsManagementPage() {
                 </div>
               </div>
 
-              {/* DYNAMIC ATTRIBUTES (MODIFIED FOR COLOR ICON) */}
+              {/* DYNAMIC ATTRIBUTES */}
               {formData.category && getCategoryAttributes().length > 0 && (
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <h3 className="text-lg font-bold mb-4 text-blue-900 flex items-center gap-2">
@@ -898,16 +893,25 @@ export default function ProductsManagementPage() {
                       <div key={attr.name}>
                         <label className="block font-bold mb-2 text-blue-900 flex items-center gap-2">
                           {attr.label}
-                          {/* 🌟 الميزة الجديدة: عرض أيقونة اللون المختار 🌟 */}
-                          {attr.name === 'color' && formData.attributes['color'] && (
-                            <span 
-                              className="w-5 h-5 rounded-full border border-gray-400 shadow-sm"
-                              style={{ backgroundColor: getColorCode(formData.attributes['color']) }}
-                              title={formData.attributes['color']}
-                            ></span>
+                          {attr.name === 'colors' && formData.attributes['colors'] && (
+                            <div className="flex flex-wrap gap-1">
+                              {formData.attributes['colors'].map((color: string) => (
+                                <span
+                                  key={color}
+                                  className="w-5 h-5 rounded-full border border-gray-400 shadow-sm"
+                                  style={{ backgroundColor: getColorCode(color) }}
+                                  title={color}
+                                />
+                              ))}
+                            </div>
                           )}
                         </label>
-                        {attr.type === 'select' ? (
+                        {attr.type === 'multi-color' ? (
+                          <MultiColorSelector
+                            selectedColors={formData.attributes.colors || []}
+                            onChange={(val) => handleAttributeChange('colors', val)}
+                          />
+                        ) : attr.type === 'select' ? (
                           <select
                             value={formData.attributes[attr.name] || ''}
                             onChange={(e) => handleAttributeChange(attr.name, e.target.value)}
