@@ -10,9 +10,27 @@ import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 import Footer from '@/components/Footer';
 import ProductReviewsList from '@/components/ProductReviewsList';
-
 import toast from 'react-hot-toast';
 
+// خريطة الألوان
+const colorMap: Record<string, string> = {
+  'أبيض': '#FFFFFF',
+  'أسود': '#000000',
+  'أزرق': '#007BFF',
+  'وردي': '#FFC0CB',
+  'أحمر': '#DC3545',
+  'أصفر': '#FFC107',
+  'أخضر': '#28A745',
+  'برتقالي': '#FD7E14',
+  'بنفسجي': '#6F42C1',
+  'رمادي': '#6C757D',
+  'بيج': '#F5F5DC',
+  'بني': '#A52A2A',
+};
+
+const getColorCode = (colorName: string): string => {
+  return colorMap[colorName] || '#CCCCCC';
+};
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -23,6 +41,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedColor, setSelectedColor] = useState<string>('');
   
   const { addToCart, getCartCount } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist, getWishlistCount } = useWishlist();
@@ -45,6 +64,11 @@ export default function ProductDetailPage() {
       const data = await response.json();
       console.log('✅ Product loaded:', data);
       setProduct(data);
+      
+      // اختيار أول لون متاح تلقائياً
+      if (data.attributes?.colors?.length > 0) {
+        setSelectedColor(data.attributes.colors[0]);
+      }
     } catch (error) {
       console.error('❌ Error fetching product:', error);
       toast.error('المنتج غير موجود');
@@ -54,10 +78,29 @@ export default function ProductDetailPage() {
     }
   };
 
+  // دالة للحصول على المخزون حسب اللون
+  const getColorStock = (color: string) => {
+    if (!product?.attributes?.colorStock) return product?.stock || 0;
+    return product.attributes.colorStock[color] || 0;
+  };
+
+  // دالة للحصول على الألوان المتاحة
+  const getAvailableColors = () => {
+    if (!product?.attributes?.colors) return [];
+    return product.attributes.colors.filter((color: string) => getColorStock(color) > 0);
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
-    addToCart(product, quantity);
-    toast.success(`تمت إضافة ${quantity} من ${product.nameAr} للسلة ✅`);
+    
+    // إذا كان المنتج له ألوان ولم يتم اختيار لون
+    if (getAvailableColors().length > 0 && !selectedColor) {
+      toast.error('يرجى اختيار لون أولاً');
+      return;
+    }
+    
+    addToCart(product, quantity, selectedColor);
+    toast.success(`تمت إضافة ${quantity} من ${product.nameAr} ${selectedColor ? `(لون: ${selectedColor})` : ''} للسلة ✅`);
   };
 
   const handleWishlistToggle = () => {
@@ -72,19 +115,18 @@ export default function ProductDetailPage() {
     }
   };
 
-const getProductImage = (images: string[] | undefined) => {
-  if (!images || images.length === 0) return null;
-  
-  const validImage = images.find(img => {
-    if (!img || img === 'placeholder.jpg') return false;
-    return img.startsWith('/uploads/') || 
-           img.startsWith('https://res.cloudinary.com/') ||
-           img.startsWith('http');
-  });
-  
-  return validImage || null;
-};
-
+  const getProductImage = (images: string[] | undefined) => {
+    if (!images || images.length === 0) return null;
+    
+    const validImage = images.find(img => {
+      if (!img || img === 'placeholder.jpg') return false;
+      return img.startsWith('/uploads/') || 
+             img.startsWith('https://res.cloudinary.com/') ||
+             img.startsWith('http');
+    });
+    
+    return validImage || null;
+  };
 
   const getProductIcon = (categoryId: string) => {
     const icons: any = {
@@ -124,6 +166,7 @@ const getProductImage = (images: string[] | undefined) => {
   }
 
   const productImage = getProductImage(product.images);
+  const availableColors = getAvailableColors();
 
   return (
     <div className="min-h-screen bg-gray-50 font-arabic">
@@ -260,6 +303,40 @@ const getProductImage = (images: string[] | undefined) => {
                 )}
               </div>
 
+              {/* Color Selection - الجديد */}
+              {availableColors.length > 0 && (
+                <div className="bg-white border-2 border-gray-200 rounded-xl p-6 mb-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    🎨 اختر اللون
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {availableColors.map((color: string) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setSelectedColor(color)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${
+                          selectedColor === color
+                            ? 'border-blue-500 bg-blue-50 shadow-md'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-full border-2 border-white shadow-lg"
+                          style={{ backgroundColor: getColorCode(color) }}
+                        />
+                        <div className="text-right">
+                          <span className="font-semibold text-gray-700 block">{color}</span>
+                          <span className="text-sm text-gray-500">
+                            {getColorStock(color)} متوفر
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Description */}
               <div className="bg-gray-50 rounded-xl p-6 mb-6">
                 <h3 className="font-bold text-gray-900 mb-3">الوصف:</h3>
@@ -268,7 +345,7 @@ const getProductImage = (images: string[] | undefined) => {
                 </p>
               </div>
 
-              {/* Product Details - ONLY Real Info ✅ */}
+              {/* Product Details */}
               <div className="bg-white border-2 border-gray-200 rounded-xl p-6 mb-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                   📋 تفاصيل المنتج
@@ -281,7 +358,7 @@ const getProductImage = (images: string[] | undefined) => {
                     <span className="font-bold text-gray-900">{product.category}</span>
                   </div>
 
-                  {/* Age Group - Only if set */}
+                  {/* Age Group */}
                   {product.ageGroup && (
                     <div className="flex items-center justify-between py-3 border-b border-gray-200">
                       <span className="text-gray-600">الفئة العمرية</span>
@@ -297,7 +374,7 @@ const getProductImage = (images: string[] | undefined) => {
                     </div>
                   )}
 
-                  {/* Gender - Only if set */}
+                  {/* Gender */}
                   {product.gender && product.gender !== 'unisex' && (
                     <div className="flex items-center justify-between py-3 border-b border-gray-200">
                       <span className="text-gray-600">مناسب لـ</span>
@@ -312,7 +389,10 @@ const getProductImage = (images: string[] | undefined) => {
                   {/* Stock Status */}
                   <div className="flex items-center justify-between py-3">
                     <span className="text-gray-600">حالة التوفر</span>
-                    <span className={`font-bold flex items-center gap-2 ${product.stock > 10 ? 'text-green-600' : product.stock > 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                    <span className={`font-bold flex items-center gap-2 ${
+                      product.stock > 10 ? 'text-green-600' : 
+                      product.stock > 0 ? 'text-orange-600' : 'text-red-600'
+                    }`}>
                       {product.stock > 10 ? (
                         <>✅ متوفر ({product.stock} قطعة)</>
                       ) : product.stock > 0 ? (
@@ -323,7 +403,7 @@ const getProductImage = (images: string[] | undefined) => {
                     </span>
                   </div>
 
-                  {/* Custom Specifications from Admin ✅ */}
+                  {/* Specifications */}
                   {product.specifications && (
                     <div className="pt-4 border-t border-gray-200">
                       <h4 className="font-bold text-gray-900 mb-3">مواصفات إضافية:</h4>
@@ -348,7 +428,7 @@ const getProductImage = (images: string[] | undefined) => {
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600 font-bold text-xl">✓</span>
-                    <span><strong>آمن للأطفال:</strong> خالي من المواد الضارة لأبنائكم </span>
+                    <span><strong>آمن للأطفال:</strong> خالي من المواد الضارة</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600 font-bold text-xl">✓</span>
@@ -356,7 +436,7 @@ const getProductImage = (images: string[] | undefined) => {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600 font-bold text-xl">✓</span>
-                    <span><strong>ضمان الجودة:</strong> الصورة حقيقية للمنتوج</span>
+                    <span><strong>ضمان الجودة:</strong> الصورة حقيقية للمنتج</span>
                   </li>
                 </ul>
               </div>
@@ -375,13 +455,16 @@ const getProductImage = (images: string[] | undefined) => {
                     {quantity}
                   </span>
                   <button
-                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                    onClick={() => {
+                      const maxStock = selectedColor ? getColorStock(selectedColor) : product.stock;
+                      setQuantity(Math.min(maxStock, quantity + 1));
+                    }}
                     className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
                   <span className="text-gray-600 mr-4">
-                    متوفر: {product.stock} قطعة
+                    متوفر: {selectedColor ? getColorStock(selectedColor) : product.stock} قطعة
                   </span>
                 </div>
               </div>
@@ -390,7 +473,7 @@ const getProductImage = (images: string[] | undefined) => {
               <div className="flex gap-3 mb-6">
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.stock === 0}
+                  disabled={product.stock === 0 || (selectedColor && getColorStock(selectedColor) === 0)}
                   className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="w-6 h-6" />
@@ -424,15 +507,13 @@ const getProductImage = (images: string[] | undefined) => {
         </div>
       </section>
 
-      {/* Review Form Section */}
-            {/* Product Reviews Section */}
+      {/* Product Reviews Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
               ⭐ تقييمات هذا المنتج
             </h2>
-
             <ProductReviewsList productName={product.nameAr} />
           </div>
         </div>
@@ -448,85 +529,17 @@ const getProductImage = (images: string[] | undefined) => {
               </h3>
               
               <form 
-  onSubmit={(e) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get('name') as string;
-    const rating = formData.get('rating') as string;
-    const comment = formData.get('comment') as string;
-    
-    fetch('/api/reviews', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        customerName: name,
-        rating: parseInt(rating),
-        comment: comment,
-        productName: product.nameAr,
-      })
-    })
-    .then(r => r.json())
-    .then(() => {
-      toast.success('شكراً! تقييمك قيد المراجعة وسيظهر قريباً ✅');
-      (e.target as HTMLFormElement).reset();
-    })
-    .catch(() => toast.error('حدث خطأ'));
-  }}
->
-
-                <div>
-                  <label className="block text-gray-700 font-bold mb-2">اسمك</label>
-                  <input
-                    type="text"
-                    name="name"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                    placeholder="أدخل اسمك"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 font-bold mb-2">التقييم</label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <label key={star} className="cursor-pointer">
-                        <input type="radio" name="rating" value={star} className="sr-only peer" required />
-                        <Star className="w-10 h-10 text-gray-300 peer-checked:text-yellow-400 peer-checked:fill-yellow-400 hover:scale-110 transition" />
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 font-bold mb-2">تعليقك</label>
-                  <textarea
-                    name="comment"
-                    rows={5}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition resize-none"
-                    placeholder="أخبرنا عن تجربتك مع المنتج..."
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg hover:shadow-xl"
-                >
-                  إرسال التقييم ⭐
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <Footer />
-
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-        .font-arabic { font-family: 'Cairo', sans-serif !important; }
-      `}</style>
-    </div>
-  );
-}
-
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const name = formData.get('name') as string;
+                  const rating = formData.get('rating') as string;
+                  const comment = formData.get('comment') as string;
+                  
+                  fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                      customerName: name,
+                      rating: parseInt(rating),
+                      comment: comment,
