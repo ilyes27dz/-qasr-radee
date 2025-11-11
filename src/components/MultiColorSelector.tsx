@@ -42,82 +42,87 @@ export default function MultiColorSelector({ selectedColors, onChange }: MultiCo
   const availableColors = allColors.filter(color => !selectedColors.includes(color));
 
   return (
-    <div className="space-y-3">
-      {/* Selected Colors Display */}
-      <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-gray-50 min-h-[60px]">
+    <div className="space-y-4">
+      {/* Selected Colors */}
+      <div className="border rounded-lg p-4 bg-gray-50">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          الألوان المختارة ({selectedColors.length})
+        </label>
+        
         {selectedColors.length === 0 ? (
-          <p className="text-gray-500 text-sm">لم يتم اختيار أي ألوان بعد</p>
+          <p className="text-gray-500 text-sm text-center py-4">لم يتم اختيار أي ألوان بعد</p>
         ) : (
-          selectedColors.map(color => (
-            <div 
-              key={color} 
-              className="flex items-center gap-2 bg-white rounded-full px-3 py-2 text-sm border shadow-sm"
-            >
-              <div
-                className="w-5 h-5 rounded-full border border-gray-300 shadow-sm"
-                style={{ backgroundColor: colorMap[color] || '#CCCCCC' }}
-                title={color}
-              ></div>
-              <span className="font-medium text-gray-700">{color}</span>
-              <button 
-                type="button" 
-                onClick={() => handleRemoveColor(color)} 
-                className="text-red-500 hover:text-red-700 transition-colors"
+          <div className="flex flex-wrap gap-3">
+            {selectedColors.map(color => (
+              <div 
+                key={color} 
+                className="flex items-center gap-2 bg-white rounded-xl px-4 py-3 border shadow-sm transition-all hover:shadow-md"
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))
+                <div
+                  className="w-6 h-6 rounded-full border-2 border-white shadow-lg"
+                  style={{ backgroundColor: colorMap[color] || '#CCCCCC' }}
+                  title={color}
+                />
+                <span className="font-medium text-gray-800 text-sm">{color}</span>
+                <button 
+                  type="button" 
+                  onClick={() => handleRemoveColor(color)} 
+                  className="text-red-500 hover:text-red-700 transition-colors p-1 hover:bg-red-50 rounded-full"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
       {/* Color Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          اختر الألوان المتاحة:
+      <div className="border rounded-lg p-4 bg-white">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          إضافة ألوان جديدة
         </label>
+        
         <select
           onChange={(e) => {
-            handleSelectColor(e.target.value);
-            e.target.value = ''; // Reset selection
+            if (e.target.value) {
+              handleSelectColor(e.target.value);
+              e.target.value = '';
+            }
           }}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          value=""
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3"
         >
-          <option value="" disabled>-- اختر لونًا لإضافته --</option>
+          <option value="">-- اختر لونًا لإضافته --</option>
           {availableColors.map(color => (
             <option key={color} value={color}>
               {color}
             </option>
           ))}
         </select>
-        <p className="text-xs text-gray-500 mt-1">
-          {selectedColors.length} / {allColors.length} ألوان مختارة
-        </p>
-      </div>
 
-      {/* Quick Color Pills */}
-      {availableColors.length > 0 && (
-        <div className="mt-3">
-          <p className="text-sm font-medium text-gray-700 mb-2">اختيار سريع:</p>
-          <div className="flex flex-wrap gap-2">
-            {availableColors.slice(0, 6).map(color => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => handleSelectColor(color)}
-                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div
-                  className="w-4 h-4 rounded-full border border-gray-300"
-                  style={{ backgroundColor: colorMap[color] }}
-                ></div>
-                <span className="text-sm text-gray-700">{color}</span>
-              </button>
-            ))}
+        {/* Quick Color Pills */}
+        {availableColors.length > 0 && (
+          <div>
+            <p className="text-sm text-gray-600 mb-2">أو اختر من هنا:</p>
+            <div className="flex flex-wrap gap-2">
+              {availableColors.map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => handleSelectColor(color)}
+                  className="flex items-center gap-2 px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                >
+                  <div
+                    className="w-4 h-4 rounded-full border border-gray-300"
+                    style={{ backgroundColor: colorMap[color] }}
+                  />
+                  <span className="text-gray-700">{color}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
