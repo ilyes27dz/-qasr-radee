@@ -1,3 +1,4 @@
+// src/app/products/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,46 +19,46 @@ import toast from 'react-hot-toast';
 // يجب أن تطابق هذه الأسماء أسماء الألوان في بيانات المنتج (variants)
 // ====================================================================
 const colorMap: Record<string, string> = {
-  'أبيض': '#FFFFFF',
-  'أسود': '#000000',
-  'أحمر': '#EF4444', 
-  'أزرق': '#3B82F6', 
-  'أخضر': '#10B981', 
-  'أصفر': '#F59E0B', 
-  'وردي': '#EC4899', 
-  'رمادي': '#6B7280', 
-  'بني': '#964B00',  
+  'أبيض': '#FFFFFF',
+  'أسود': '#000000',
+  'أحمر': '#EF4444', 
+  'أزرق': '#3B82F6', 
+  'أخضر': '#10B981', 
+  'أصفر': '#F59E0B', 
+  'وردي': '#EC4899', 
+  'رمادي': '#6B7280', 
+  'بني': '#964B00',  
 };
 
 const getColorCode = (colorName: string): string => {
-  return colorMap[colorName] || '#CCCCCC'; // رمادي فاتح كلون افتراضي
+  return colorMap[colorName] || '#CCCCCC'; // رمادي فاتح كلون افتراضي
 };
 // ====================================================================
 
 // افتراضية بسيطة لنوع المنتج مع متغيرات الألوان
 interface ProductVariant {
-    color: string;
-    stock: number;
-    images?: string[];
+    color: string;
+    stock: number;
+    images?: string[];
 }
 
 interface Product {
-    id: string;
-    nameAr: string;
-    descriptionAr?: string;
-    price: number;
-    salePrice?: number;
-    stock: number; // المخزون العام (يجب استخدامه فقط إذا لم يكن هناك variants)
-    rating: number;
-    sales: number;
-    images: string[];
-    categoryId: string;
-    category: string;
-    ageGroup?: string;
-    gender?: string;
-    badge?: string;
-    specifications?: string;
-    variants?: ProductVariant[]; // قائمة متغيرات اللون والمخزون
+    id: string;
+    nameAr: string;
+    descriptionAr?: string;
+    price: number;
+    salePrice?: number;
+    stock: number; // المخزون العام (يجب استخدامه فقط إذا لم يكن هناك variants)
+    rating: number;
+    sales: number;
+    images: string[];
+    categoryId: string;
+    category: string;
+    ageGroup?: string;
+    gender?: string;
+    badge?: string;
+    specifications?: string;
+    variants?: ProductVariant[]; // قائمة متغيرات اللون والمخزون
 }
 
 export default function ProductDetailPage() {
@@ -70,7 +71,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   // 🆕 الحالة الجديدة لتخزين اللون المختار
-  const [selectedColor, setSelectedColor] = useState<string | null>(null); 
+  const [selectedColor, setSelectedColor] = useState<string | null>(null); 
   
   const { addToCart, getCartCount } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist, getWishlistCount } = useWishlist();
@@ -94,14 +95,14 @@ export default function ProductDetailPage() {
       console.log('✅ Product loaded:', data);
       setProduct(data);
 
-      // 🆕 تعيين اللون الافتراضي: أول لون متوفر
-      if (data.variants && data.variants.length > 0) {
-        // نختار أول لون متوفر في المخزون
-        const firstAvailableColor = data.variants.find(v => v.stock > 0)?.color || data.variants[0].color;
-        setSelectedColor(firstAvailableColor);
-      }
-      // ------------------------------------
-      
+      // 🆕 تعيين اللون الافتراضي: أول لون متوفر
+      if (data.variants && data.variants.length > 0) {
+        // نختار أول لون متوفر في المخزون
+        const firstAvailableColor = data.variants.find(v => v.stock > 0)?.color || data.variants[0].color;
+        setSelectedColor(firstAvailableColor);
+      }
+      // ------------------------------------
+      
     } catch (error) {
       console.error('❌ Error fetching product:', error);
       toast.error('المنتج غير موجود');
@@ -113,29 +114,34 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    
-    // 🆕 تحقق من اختيار اللون إذا كان المنتج يتطلب ذلك
-    if (product.variants && product.variants.length > 0 && !selectedColor) {
-      toast.error('الرجاء اختيار لون المنتج أولاً');
-      return;
-    }
+    
+    // 🆕 تحقق من اختيار اللون إذا كان المنتج يتطلب ذلك
+    if (product.variants && product.variants.length > 0 && !selectedColor) {
+      toast.error('الرجاء اختيار لون المنتج أولاً');
+      return;
+    }
 
-    // 🆕 نرسل اللون المختار كـ 'selectedColor'
-    addToCart({ 
-        ...product, 
-        selectedColor: selectedColor, // إضافة اللون المختار إلى بيانات السلة
-    }, quantity);
+    // ******************************************************
+    // ✅ التعديل لحل مشكلة النوع (Type Error)
+    // نمرر كائن CartItem يتضمن كائن المنتج (product) واللون (color)
+    // ******************************************************
+    addToCart({ 
+        product: product,         // تمرير كائن المنتج كاملاً
+        quantity: quantity,       // قد تكون الكمية مطلوبة كجزء من الكائن حسب تعريف CartItem لديك
+        color: selectedColor,     // استخدام "color" بدلاً من "selectedColor" لتطابق واجهة CartItem
+    });
+    
     toast.success(`تمت إضافة ${quantity} من ${product.nameAr} للسلة ✅`);
   };
 
   const handleWishlistToggle = () => {
     if (!product) return;
-    
-    const productWithColor = { 
-      ...product, 
-      // حفظ اللون المختار، أو أول لون كإجراء احتياطي
-      selectedColor: selectedColor || product.variants?.[0]?.color 
-    };
+    
+    const productWithColor = { 
+      ...product, 
+      // حفظ اللون المختار، أو أول لون كإجراء احتياطي
+      selectedColor: selectedColor || product.variants?.[0]?.color 
+    };
     
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
@@ -175,30 +181,30 @@ const getProductImage = (images: string[] | undefined) => {
   if (loading || !product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        {loading ? (
-            <div className="text-center">
-              <div className="inline-block animate-spin text-6xl mb-4">⏳</div>
-              <p className="text-xl text-gray-600 font-bold">جاري التحميل...</p>
-            </div>
-        ) : (
-             <div className="text-center">
-               <div className="text-9xl mb-6">😢</div>
-               <h2 className="text-3xl font-bold text-gray-900 mb-4">المنتج غير موجود</h2>
-               <Link href="/products" className="text-blue-600 hover:text-blue-700 font-bold">
-                 ← العودة للمنتجات
-               </Link>
-             </div>
-        )}
+        {loading ? (
+            <div className="text-center">
+              <div className="inline-block animate-spin text-6xl mb-4">⏳</div>
+              <p className="text-xl text-gray-600 font-bold">جاري التحميل...</p>
+            </div>
+        ) : (
+             <div className="text-center">
+               <div className="text-9xl mb-6">😢</div>
+               <h2 className="text-3xl font-bold text-gray-900 mb-4">المنتج غير موجود</h2>
+               <Link href="/products" className="text-blue-600 hover:text-blue-700 font-bold">
+                 ← العودة للمنتجات
+               </Link>
+             </div>
+        )}
       </div>
     );
   }
 
-  // 🆕 تحديد المخزون الفعلي بناءً على اللون المختار
-  const currentVariant = product.variants?.find((v) => v.color === selectedColor);
-  // نستخدم مخزون المتغير إذا كان متاحاً، وإلا نستخدم المخزون العام للمنتج
-  const currentStock = currentVariant ? currentVariant.stock : product.stock; 
-  const isOutOfStock = currentStock === 0;
-  // ------------------------------------
+  // 🆕 تحديد المخزون الفعلي بناءً على اللون المختار
+  const currentVariant = product.variants?.find((v) => v.color === selectedColor);
+  // نستخدم مخزون المتغير إذا كان متاحاً، وإلا نستخدم المخزون العام للمنتج
+  const currentStock = currentVariant ? currentVariant.stock : product.stock; 
+  const isOutOfStock = currentStock === 0;
+  // ------------------------------------
 
   const productImage = getProductImage(product.images);
 
@@ -245,7 +251,7 @@ const getProductImage = (images: string[] | undefined) => {
             <span>/</span>
             <span className="text-gray-900 font-semibold">{product.nameAr}</span>
           </div>
-        </div>
+            </div>
       </div>
 
       {/* Product Details */}
@@ -345,60 +351,60 @@ const getProductImage = (images: string[] | undefined) => {
                 </p>
               </div>
 
-              {/* 🎨 NEW: Color Selection Section */}
-              {product.variants && product.variants.length > 0 && (
-                <div className="mb-8">
-                  <label className="block font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    اللون المختار: 
-                    {selectedColor ? (
-                      <span className="text-blue-600 flex items-center gap-1">
-                        {selectedColor}
-                        <span 
-                          className="inline-block w-4 h-4 rounded-full border border-gray-400 shadow-sm"
-                          style={{ backgroundColor: getColorCode(selectedColor) }}
-                          title={selectedColor}
-                        ></span>
-                      </span>
-                    ) : (
-                      <span className="text-red-500 font-normal">الرجاء الاختيار</span>
-                    )}
-                  </label>
+              {/* 🎨 NEW: Color Selection Section */}
+              {product.variants && product.variants.length > 0 && (
+                <div className="mb-8">
+                  <label className="block font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    اللون المختار: 
+                    {selectedColor ? (
+                      <span className="text-blue-600 flex items-center gap-1">
+                        {selectedColor}
+                        <span 
+                          className="inline-block w-4 h-4 rounded-full border border-gray-400 shadow-sm"
+                          style={{ backgroundColor: getColorCode(selectedColor) }}
+                          title={selectedColor}
+                        ></span>
+                      </span>
+                    ) : (
+                      <span className="text-red-500 font-normal">الرجاء الاختيار</span>
+                    )}
+                  </label>
 
-                  <div className="flex flex-wrap gap-3">
-                    {product.variants.map((variant) => (
-                      <button
-                        key={variant.color}
-                        onClick={() => {
-                          setSelectedColor(variant.color);
-                          setQuantity(1); // إعادة تعيين الكمية عند تغيير اللون
-                        }}
-                        className={`
-                          p-3 rounded-xl border-2 transition relative 
-                          ${selectedColor === variant.color 
-                            ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600' 
-                            : 'border-gray-300 hover:border-gray-400 bg-white'
-                          }
-                          ${variant.stock === 0 ? 'opacity-50 cursor-not-allowed' : ''}
-                        `}
-                        disabled={variant.stock === 0}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span 
-                            className="w-5 h-5 rounded-full border border-gray-400 shadow-sm"
-                            style={{ backgroundColor: getColorCode(variant.color) }}
-                            title={variant.color}
-                          ></span>
-                          <span className="font-semibold text-gray-800">{variant.color}</span>
-                        </div>
-                        <span className={`block mt-1 text-xs ${variant.stock === 0 ? 'text-red-500 font-bold' : 'text-gray-600'}`}>
-                          {variant.stock === 0 ? 'نفذت الكمية' : `مخزون: ${variant.stock}`}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
+                  <div className="flex flex-wrap gap-3">
+                    {product.variants.map((variant) => (
+                      <button
+                        key={variant.color}
+                        onClick={() => {
+                          setSelectedColor(variant.color);
+                          setQuantity(1); // إعادة تعيين الكمية عند تغيير اللون
+                        }}
+                        className={`
+                          p-3 rounded-xl border-2 transition relative 
+                          ${selectedColor === variant.color 
+                            ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600' 
+                            : 'border-gray-300 hover:border-gray-400 bg-white'
+                          }
+                          ${variant.stock === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
+                        disabled={variant.stock === 0}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span 
+                            className="w-5 h-5 rounded-full border border-gray-400 shadow-sm"
+                            style={{ backgroundColor: getColorCode(variant.color) }}
+                            title={variant.color}
+                          ></span>
+                          <span className="font-semibold text-gray-800">{variant.color}</span>
+                        </div>
+                        <span className={`block mt-1 text-xs ${variant.stock === 0 ? 'text-red-500 font-bold' : 'text-gray-600'}`}>
+                          {variant.stock === 0 ? 'نفذت الكمية' : `مخزون: ${variant.stock}`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               {/* Product Details - ONLY Real Info ✅ */}
               <div className="bg-white border-2 border-gray-200 rounded-xl p-6 mb-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -498,7 +504,7 @@ const getProductImage = (images: string[] | undefined) => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={isOutOfStock} // تعطيل إذا لم يكن هناك مخزون
+                    disabled={isOutOfStock} // تعطيل إذا لم يكن هناك مخزون
                     className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Minus className="w-5 h-5" />
