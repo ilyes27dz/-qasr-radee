@@ -16,7 +16,6 @@ import toast from 'react-hot-toast';
 
 // ====================================================================
 // 🎨 وظيفة مساعدة لتحويل اسم اللون العربي إلى كود Hex
-// يجب أن تطابق هذه الأسماء أسماء الألوان في بيانات المنتج (variants)
 // ====================================================================
 const colorMap: Record<string, string> = {
   'أبيض': '#FFFFFF',
@@ -122,8 +121,8 @@ export default function ProductDetailPage() {
     }
 
     // ******************************************************
-    // ✅ التعديل النهائي لحل خطأ Type error:
-    // دمج خصائص المنتج مع الكمية واللون مباشرة.
+    // ✅ الحل النهائي: تمرير خصائص المنتج مدمجة مع الكمية واللون.
+    // هذا يتطلب أن تكون واجهة CartItem هي: interface CartItem extends Product { quantity: number; color: string | null; }
     // ******************************************************
     addToCart({ 
         ...product,            // نشر جميع خصائص كائن المنتج (id, nameAr, price, etc.)
@@ -285,6 +284,7 @@ const getProductImage = (images: string[] | undefined) => {
                       className={`flex-shrink-0 w-20 h-20 rounded-lg border-2 overflow-hidden ${
                         selectedImage === idx ? 'border-blue-600' : 'border-gray-200'
                       }`}
+                      disabled={!getProductImage([img])} // منع النقر إذا كانت الصورة غير صالحة
                     >
                       <img src={img} alt="" className="w-full h-full object-cover" />
                     </button>
@@ -317,7 +317,7 @@ const getProductImage = (images: string[] | undefined) => {
                       }`}
                     />
                   ))}
-                </div>
+              </div>
                 <span className="text-gray-600 font-semibold">({product.rating})</span>
                 <span className="text-gray-400">|</span>
                 <span className="text-gray-600">تم بيع {product.sales}+ قطعة</span>
