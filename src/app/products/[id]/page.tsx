@@ -122,13 +122,13 @@ export default function ProductDetailPage() {
     }
 
     // ******************************************************
-    // ✅ التعديل لحل مشكلة النوع (Type Error)
-    // نمرر كائن CartItem يتضمن كائن المنتج (product) واللون (color)
+    // ✅ التعديل النهائي لحل خطأ Type error:
+    // دمج خصائص المنتج مع الكمية واللون مباشرة.
     // ******************************************************
     addToCart({ 
-        product: product,         // تمرير كائن المنتج كاملاً
-        quantity: quantity,       // قد تكون الكمية مطلوبة كجزء من الكائن حسب تعريف CartItem لديك
-        color: selectedColor,     // استخدام "color" بدلاً من "selectedColor" لتطابق واجهة CartItem
+        ...product,            // نشر جميع خصائص كائن المنتج (id, nameAr, price, etc.)
+        quantity: quantity,       // إضافة الكمية
+        color: selectedColor,     // إضافة اللون المختار
     });
     
     toast.success(`تمت إضافة ${quantity} من ${product.nameAr} للسلة ✅`);
@@ -655,7 +655,7 @@ const getProductImage = (images: string[] | undefined) => {
                 </button>
               </form>
             </div>
-          </div>
+            </div>
         </div>
       </section>
 
