@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // ✅ التحقق من توفر الكمية لكل منتج
+    // ✅ التحقق من توفر الكمية لكل منتج مع مراعاة الألوان
     for (const item of body.items) {
       const product = await prisma.product.findUnique({
         where: { id: item.productId || item.id },
@@ -41,22 +41,39 @@ export async function POST(request: Request) {
         );
       }
 
-      if (product.stock < item.quantity) {
-        return NextResponse.json(
-          { 
-            error: `الكمية المتوفرة من "${product.nameAr}" هي ${product.stock} فقط`,
-            availableStock: product.stock,
-            productId: product.id
-          },
-          { status: 400 }
-        );
+      // إذا كان هناك لون محدد، نتحقق من مخزون هذا اللون
+      if (item.color && product.attributes?.colorStock) {
+        const colorStock = product.attributes.colorStock[item.color] || 0;
+        if (colorStock < item.quantity) {
+          return NextResponse.json(
+            { 
+              error: `الكمية المتوفرة من "${product.nameAr}" (لون: ${item.color}) هي ${colorStock} فقط`,
+              availableStock: colorStock,
+              productId: product.id,
+              color: item.color
+            },
+            { status: 400 }
+          );
+        }
+      } else {
+        // التحقق من المخزون العام
+        if (product.stock < item.quantity) {
+          return NextResponse.json(
+            { 
+              error: `الكمية المتوفرة من "${product.nameAr}" هي ${product.stock} فقط`,
+              availableStock: product.stock,
+              productId: product.id
+            },
+            { status: 400 }
+          );
+        }
       }
     }
 
     // إنشاء رقم طلب فريد
     const orderNumber = `QSR-${Date.now().toString().slice(-8)}`;
 
-    // ✅ حفظ الطلب في قاعدة البيانات
+    // ✅ حفظ الطلب في قاعدة البيانات مع حفظ معلومات الألوان
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -79,6 +96,7 @@ export async function POST(request: Request) {
             productName: item.productName || item.nameAr || item.name,
             quantity: parseInt(item.quantity) || 1,
             price: parseFloat(item.price) || 0,
+            attributes: item.color ? { color: item.color } : null, // ✅ حفظ اللون مع الطلب
           })),
         },
       },
@@ -87,18 +105,45 @@ export async function POST(request: Request) {
       },
     });
 
-    // ✅ خصم الكمية من المخزون
+    // ✅ خصم الكمية من المخزون مع مراعاة الألوان
     for (const item of body.items) {
-      await prisma.product.update({
+      const product = await prisma.product.findUnique({
         where: { id: item.productId || item.id },
-        data: {
+      });
+
+      if (product) {
+        let updateData: any = {
           stock: {
             decrement: item.quantity,
           },
-        },
-      });
+          sales: {
+            increment: item.quantity,
+          },
+        };
 
-      console.log(`✅ تم خصم ${item.quantity} من المنتج ${item.productName || item.nameAr}`);
+        // إذا كان هناك لون محدد، نخصم من مخزون هذا اللون
+        if (item.color && product.attributes?.colorStock) {
+          const currentColorStock = product.attributes.colorStock[item.color] || 0;
+          const newColorStock = Math.max(0, currentColorStock - item.quantity);
+          
+          updateData.attributes = {
+            ...product.attributes,
+            colorStock: {
+              ...product.attributes.colorStock,
+              [item.color]: newColorStock,
+            },
+          };
+
+          console.log(`✅ تم خصم ${item.quantity} من المنتج ${product.nameAr} (لون: ${item.color}) - المتبقي: ${newColorStock}`);
+        } else {
+          console.log(`✅ تم خصم ${item.quantity} من المنتج ${product.nameAr} - المتبقي: ${product.stock - item.quantity}`);
+        }
+
+        await prisma.product.update({
+          where: { id: item.productId || item.id },
+          data: updateData,
+        });
+      }
     }
 
     // 🔔 إنشاء إشعار للـ Admin
@@ -143,7 +188,16 @@ export async function GET(request: Request) {
     const orders = await prisma.order.findMany({
       where,
       include: {
-        items: true,
+        items: {
+          include: {
+            product: {
+              select: {
+                nameAr: true,
+                images: true,
+              }
+            }
+          }
+        },
       },
       orderBy: {
         createdAt: 'desc',
