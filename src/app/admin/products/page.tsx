@@ -30,34 +30,35 @@ const ageGroups = [
   { value: '2-4years', label: '2-4 سنوات' },
 ];
 
-// ✅ الحقول الديناميكية حسب الفئة
+const colors = ['أبيض', 'أسود', 'أزرق', 'وردي', 'أحمر', 'أصفر', 'أخضر', 'برتقالي', 'بنفسجي', 'رمادي', 'بيج', 'بني'];
+
 const categorySpecifications: Record<string, Array<{name: string; label: string; type: string; options?: string[]}>> = {
   'ملابس': [
     { name: 'size', label: 'المقاس', type: 'select', options: ['حديث الولادة', '0-3 شهور', '3-6 شهور', '6-12 شهر', '12-18 شهر', '18-24 شهر'] },
     { name: 'age', label: 'السن المناسب', type: 'select', options: ['0-3 شهور', '3-6 شهور', '6-12 شهر', '1-2 سنة', '2-3 سنوات'] },
-    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'color', label: 'اللون', type: 'select', options: colors },
     { name: 'material', label: 'المادة', type: 'select', options: ['قطن 100%', 'قطن ممزوج', 'صوف', 'حرير'] },
   ],
   'للتغذية': [
-    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'color', label: 'اللون', type: 'select', options: colors },
     { name: 'capacity', label: 'السعة/الحجم', type: 'select', options: ['150ml', '250ml', '330ml', '500ml', 'حسب الطلب'] },
     { name: 'material', label: 'المادة', type: 'select', options: ['بلاستيك طبي', 'زجاج', 'سيليكون', 'ستانلس ستيل'] },
     { name: 'brand', label: 'الماركة', type: 'text' },
   ],
   'للرضاعة': [
-    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'color', label: 'اللون', type: 'select', options: colors },
     { name: 'capacity', label: 'السعة', type: 'select', options: ['120ml', '150ml', '240ml', '300ml'] },
     { name: 'material', label: 'النوع', type: 'select', options: ['زجاج', 'بلاستيك آمن', 'سيليكون'] },
     { name: 'anti_colic', label: 'مضادة للقولونج', type: 'select', options: ['نعم', 'لا'] },
   ],
   'ألعاب': [
     { name: 'age', label: 'السن المناسب', type: 'select', options: ['0-6 شهور', '6-12 شهر', '1-2 سنة', '2-3 سنوات', '3+ سنوات'] },
-    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'color', label: 'اللون', type: 'select', options: colors },
     { name: 'material', label: 'المادة', type: 'select', options: ['بلاستيك آمن', 'خشب طبيعي', 'قماش', 'مطاط', 'معدن'] },
     { name: 'safety', label: 'شهادة الأمان', type: 'select', options: ['CE', 'FDA', 'لا توجد'] },
   ],
   'للخرجات': [
-    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'color', label: 'اللون', type: 'select', options: colors },
     { name: 'capacity', label: 'السعة', type: 'select', options: ['صغير', 'متوسط', 'كبير'] },
     { name: 'material', label: 'المادة', type: 'select', options: ['قماش مقاوم', 'جلد صناعي', 'نايلون'] },
     { name: 'features', label: 'المميزات', type: 'text' },
@@ -71,7 +72,7 @@ const categorySpecifications: Record<string, Array<{name: string; label: string;
   'للنوم': [
     { name: 'size', label: 'المقاس', type: 'select', options: ['حديث الولادة', '0-6 شهور', '6-12 شهر', '1-2 سنة'] },
     { name: 'material', label: 'المادة', type: 'select', options: ['قطن 100%', 'موسلين', 'حرير'] },
-    { name: 'color', label: 'اللون', type: 'text' },
+    { name: 'color', label: 'اللون', type: 'select', options: colors },
     { name: 'tog_rating', label: 'درجة الدفء', type: 'select', options: ['0.5 TOG', '1 TOG', '2.5 TOG'] },
   ],
 };
@@ -103,7 +104,7 @@ export default function ProductsManagementPage() {
     badge: '',
     featured: false,
     enabled: true,
-    attributes: {} as Record<string, string>, // ✅ الحقول الديناميكية
+    attributes: {} as Record<string, string>, // الحقول الديناميكية
   });
 
   useEffect(() => {
@@ -150,10 +151,6 @@ export default function ProductsManagementPage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchProducts();
-  }, [selectedCategory, searchQuery]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -642,13 +639,14 @@ export default function ProductsManagementPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+
               {/* Images Upload */}
               <div>
                 <label className="block font-bold mb-2 flex items-center gap-2">
                   <ImageIcon className="w-5 h-5" />
                   صور المنتج * (يمكن رفع عدة صور)
                 </label>
-                
+
                 <div className="mb-4">
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -855,7 +853,7 @@ export default function ProductsManagementPage() {
                 </div>
               </div>
 
-              {/* ✅ DYNAMIC ATTRIBUTES - حسب الفئة */}
+              {/* DYNAMIC ATTRIBUTES */}
               {formData.category && getCategoryAttributes().length > 0 && (
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <h3 className="text-lg font-bold mb-4 text-blue-900">
