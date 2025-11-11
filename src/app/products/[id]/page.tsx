@@ -78,10 +78,16 @@ export default function ProductDetailPage() {
     }
   };
 
-  // دالة للحصول على المخزون حسب اللون
+  // دالة للحصول على المخزون الحقيقي حسب اللون
   const getColorStock = (color: string) => {
-    if (!product?.attributes?.colorStock) return product?.stock || 0;
+    if (!product?.attributes?.colorStock) return 0;
     return product.attributes.colorStock[color] || 0;
+  };
+
+  // دالة للحصول على المخزون الإجمالي الحقيقي
+  const getTotalStock = () => {
+    if (!product?.attributes?.colorStock) return product?.stock || 0;
+    return Object.values(product.attributes.colorStock).reduce((sum: number, stock: any) => sum + stock, 0);
   };
 
   // دالة للحصول على الألوان المتاحة
@@ -303,7 +309,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Color Selection - الجديد */}
+              {/* Color Selection */}
               {availableColors.length > 0 && (
                 <div className="bg-white border-2 border-gray-200 rounded-xl p-6 mb-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -390,13 +396,13 @@ export default function ProductDetailPage() {
                   <div className="flex items-center justify-between py-3">
                     <span className="text-gray-600">حالة التوفر</span>
                     <span className={`font-bold flex items-center gap-2 ${
-                      product.stock > 10 ? 'text-green-600' : 
-                      product.stock > 0 ? 'text-orange-600' : 'text-red-600'
+                      getTotalStock() > 10 ? 'text-green-600' : 
+                      getTotalStock() > 0 ? 'text-orange-600' : 'text-red-600'
                     }`}>
-                      {product.stock > 10 ? (
-                        <>✅ متوفر ({product.stock} قطعة)</>
-                      ) : product.stock > 0 ? (
-                        <>⚠️ كمية محدودة ({product.stock} قطعة فقط)</>
+                      {getTotalStock() > 10 ? (
+                        <>✅ متوفر ({getTotalStock()} قطعة)</>
+                      ) : getTotalStock() > 0 ? (
+                        <>⚠️ كمية محدودة ({getTotalStock()} قطعة فقط)</>
                       ) : (
                         <>❌ نفذت الكمية</>
                       )}
@@ -456,7 +462,7 @@ export default function ProductDetailPage() {
                   </span>
                   <button
                     onClick={() => {
-                      const maxStock = selectedColor ? getColorStock(selectedColor) : product.stock;
+                      const maxStock = selectedColor ? getColorStock(selectedColor) : getTotalStock();
                       setQuantity(Math.min(maxStock, quantity + 1));
                     }}
                     className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition"
@@ -464,7 +470,7 @@ export default function ProductDetailPage() {
                     <Plus className="w-5 h-5" />
                   </button>
                   <span className="text-gray-600 mr-4">
-                    متوفر: {selectedColor ? getColorStock(selectedColor) : product.stock} قطعة
+                    متوفر: {selectedColor ? getColorStock(selectedColor) : getTotalStock()} قطعة
                   </span>
                 </div>
               </div>
@@ -473,11 +479,11 @@ export default function ProductDetailPage() {
               <div className="flex gap-3 mb-6">
                 <button
                   onClick={handleAddToCart}
-disabled={product.stock === 0 || (!!selectedColor && getColorStock(selectedColor) === 0)}
+                  disabled={getTotalStock() === 0 || (selectedColor ? getColorStock(selectedColor) === 0 : false)}
                   className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="w-6 h-6" />
-                  {product.stock > 0 ? 'أضف للسلة' : 'نفذت الكمية'}
+                  {getTotalStock() > 0 ? 'أضف للسلة' : 'نفذت الكمية'}
                 </button>
                 <button
                   onClick={handleWishlistToggle}
