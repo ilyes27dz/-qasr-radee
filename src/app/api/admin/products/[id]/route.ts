@@ -8,7 +8,13 @@ export async function PUT(
   try {
     const body = await request.json();
 
-    console.log('Updating product with images:', body.images); // للتأكد
+    console.log('📦 Updating product with data:', {
+      id: params.id,
+      nameAr: body.nameAr,
+      attributes: body.attributes,
+      specifications: body.specifications,
+      imagesCount: body.images?.length
+    });
 
     const product = await prisma.product.update({
       where: { id: params.id },
@@ -16,10 +22,11 @@ export async function PUT(
         name: body.name,
         nameAr: body.nameAr,
         descriptionAr: body.descriptionAr,
+        specifications: body.specifications || null,
         price: body.price,
         salePrice: body.salePrice || null,
         stock: body.stock,
-        images: body.images || [], // ← المهم هنا!
+        images: body.images || [],
         category: body.category,
         categoryId: body.categoryId,
         ageGroup: body.ageGroup,
@@ -27,14 +34,21 @@ export async function PUT(
         badge: body.badge || null,
         featured: body.featured,
         enabled: body.enabled,
+        // إضافة attributes و specifications
+        attributes: body.attributes || {},
       },
     });
 
-    console.log('Product updated successfully with images:', product.images); // للتأكد
+    console.log('✅ Product updated successfully:', {
+      id: product.id,
+      nameAr: product.nameAr,
+      attributes: product.attributes,
+      specifications: product.specifications
+    });
 
     return NextResponse.json(product);
   } catch (error) {
-    console.error('Error updating product:', error);
+    console.error('❌ Error updating product:', error);
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
@@ -73,7 +87,7 @@ export async function DELETE(
       deleted: true 
     });
   } catch (error: any) {
-    console.error('Error deleting product:', error);
+    console.error('❌ Error deleting product:', error);
     return NextResponse.json({ 
       error: error?.message || 'فشل الحذف' 
     }, { status: 500 });
