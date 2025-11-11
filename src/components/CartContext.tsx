@@ -45,6 +45,7 @@ interface CartContextType {
   getCartCount: () => number;
   getItemQuantity: (productId: string, color?: string) => number;
   getAvailableStock: (product: Product, color?: string) => number;
+  createOrder: (orderData: any) => Promise<any>; // ✅ إضافة هذه الدالة
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -181,6 +182,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
   };
 
+  // ✅ دالة إنشاء الطلب مع دعم الألوان
+  const createOrder = async (orderData: any) => {
+    try {
+      // إضافة معلومات الألوان إلى العناصر
+      const itemsWithColors = orderData.items.map((item: any) => ({
+        ...item,
+        color: item.color, // إرسال اللون مع كل عنصر
+      }));
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...orderData,
+          items: itemsWithColors,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create order');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -193,6 +226,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         getCartCount,
         getItemQuantity,
         getAvailableStock,
+        createOrder, // ✅ إضافة الدالة هنا
       }}
     >
       {children}
