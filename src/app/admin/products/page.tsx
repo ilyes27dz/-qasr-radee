@@ -12,6 +12,30 @@ import {
 import toast from 'react-hot-toast';
 import { uploadMultipleToCloudinary } from '@/lib/cloudinary';
 
+// ====================================================================
+// 🎨 وظيفة مساعدة لتحويل اسم اللون العربي إلى كود Hex
+// ====================================================================
+const colorMap: Record<string, string> = {
+  'أبيض': '#FFFFFF',
+  'أسود': '#000000',
+  'أزرق': '#007BFF',
+  'وردي': '#FFC0CB',
+  'أحمر': '#DC3545',
+  'أصفر': '#FFC107',
+  'أخضر': '#28A745',
+  'برتقالي': '#FD7E14',
+  'بنفسجي': '#6F42C1',
+  'رمادي': '#6C757D',
+  'بيج': '#F5F5DC',
+  'بني': '#A52A2A',
+};
+
+const getColorCode = (colorName: string): string => {
+  return colorMap[colorName] || '#CCCCCC'; // رمادي فاتح كلون افتراضي
+};
+// ====================================================================
+
+
 const categories = [
   { id: 'all', name: 'الكل', icon: '🛍️' },
   { id: 'للتغذية', name: 'للتغذية', icon: '🍼' },
@@ -30,7 +54,7 @@ const ageGroups = [
   { value: '2-4years', label: '2-4 سنوات' },
 ];
 
-const colors = ['أبيض', 'أسود', 'أزرق', 'وردي', 'أحمر', 'أصفر', 'أخضر', 'برتقالي', 'بنفسجي', 'رمادي', 'بيج', 'بني'];
+const colors = Object.keys(colorMap); // استخدام مفاتيح خريطة الألوان لضمان التوافق
 
 const categorySpecifications: Record<string, Array<{name: string; label: string; type: string; options?: string[]}>> = {
   'ملابس': [
@@ -51,7 +75,8 @@ const categorySpecifications: Record<string, Array<{name: string; label: string;
     { name: 'material', label: 'النوع', type: 'select', options: ['زجاج', 'بلاستيك آمن', 'سيليكون'] },
     { name: 'anti_colic', label: 'مضادة للقولونج', type: 'select', options: ['نعم', 'لا'] },
   ],
-  'ألعاب': [
+  // تم افتراض وجود 'ألعاب' لإبقاء مرجع الألوان
+  'ألعاب': [ 
     { name: 'age', label: 'السن المناسب', type: 'select', options: ['0-6 شهور', '6-12 شهر', '1-2 سنة', '2-3 سنوات', '3+ سنوات'] },
     { name: 'color', label: 'اللون', type: 'select', options: colors },
     { name: 'material', label: 'المادة', type: 'select', options: ['بلاستيك آمن', 'خشب طبيعي', 'قماش', 'مطاط', 'معدن'] },
@@ -124,13 +149,15 @@ export default function ProductsManagementPage() {
     }
 
     fetchProducts();
-  }, []);
+  }, [selectedCategory, searchQuery]); // إضافة التبعيات لتحديث القائمة عند تغيير الفلترة
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (selectedCategory !== 'all') params.append('category', selectedCategory);
+      // تم تغيير طريقة الفلترة لتتماشى مع الهيكل
+      const selectedCatId = categories.find(c => c.name === selectedCategory)?.id || selectedCategory;
+      if (selectedCatId !== 'all') params.append('category', selectedCatId); 
       if (searchQuery) params.append('search', searchQuery);
 
       const response = await fetch(`/api/admin/products?${params}`);
@@ -160,7 +187,8 @@ export default function ProductsManagementPage() {
 
     try {
       const filesArray = Array.from(files);
-      const cloudinaryUrls = await uploadMultipleToCloudinary(filesArray);
+      // تأكد من أن هذه الدالة تعمل بشكل صحيح وترجع روابط صور Cloudinary
+      const cloudinaryUrls = await uploadMultipleToCloudinary(filesArray); 
       
       console.log('✅ تم رفع الصور على Cloudinary:', cloudinaryUrls);
       
@@ -283,7 +311,7 @@ export default function ProductsManagementPage() {
   const openEditModal = (product: any) => {
     setEditingProduct(product);
     const validImages = product.images?.filter((img: string) => 
-      img && img !== 'placeholder.jpg' && img.startsWith('/uploads/')
+      img && img !== 'placeholder.jpg' && (img.startsWith('/uploads/') || img.startsWith('http'))
     ) || [];
     setUploadedImages(validImages);
     
@@ -468,6 +496,9 @@ export default function ProductsManagementPage() {
                 placeholder="ابحث عن منتج..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') fetchProducts();
+                }}
                 className="w-full pr-12 px-4 py-3 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -476,7 +507,10 @@ export default function ProductsManagementPage() {
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
+                  onClick={() => {
+                    setSelectedCategory(cat.id);
+                    // يمكنك استدعاء fetchProducts مباشرة هنا أو الاعتماد على useEffect
+                  }}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap font-semibold transition ${
                     selectedCategory === cat.id
                       ? 'bg-blue-600 text-white'
@@ -560,9 +594,9 @@ export default function ProductsManagementPage() {
                         <td className="p-4">
                           <div>
                             <p className="font-bold text-gray-900">{product.price.toLocaleString()} دج</p>
-                            {product.salePrice && (
+                            {product.salePrice > 0 && product.salePrice < product.price && (
                               <p className="text-sm text-green-600 font-semibold">
-                                {product.salePrice.toLocaleString()} دج
+                                {product.salePrice.toLocaleString()} دج (تخفيض)
                               </p>
                             )}
                           </div>
@@ -582,10 +616,10 @@ export default function ProductsManagementPage() {
                         <td className="p-4">
                           <button
                             onClick={() => handleToggleStatus(product)}
-                            className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                            className={`px-3 py-1 rounded-full text-sm font-semibold transition ${
                               product.enabled
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-700'
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                           >
                             {product.enabled ? 'نشط' : 'معطل'}
@@ -621,7 +655,7 @@ export default function ProductsManagementPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto font-arabic">
           <div className="bg-white rounded-2xl w-full max-w-4xl my-8">
             <div className="p-6 border-b flex items-center justify-between sticky top-0 bg-white z-10 rounded-t-2xl">
               <h2 className="text-2xl font-bold">
@@ -640,13 +674,13 @@ export default function ProductsManagementPage() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
 
-              {/* Images Upload */}
-              <div>
+              {/* Images Upload Section */}
+              <div className="border p-4 rounded-lg bg-gray-50">
                 <label className="block font-bold mb-2 flex items-center gap-2">
                   <ImageIcon className="w-5 h-5" />
                   صور المنتج * (يمكن رفع عدة صور)
                 </label>
-
+                
                 <div className="mb-4">
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -815,7 +849,7 @@ export default function ProductsManagementPage() {
                       setFormData({
                         ...formData, 
                         category: e.target.value,
-                        attributes: {},
+                        attributes: {}, // إعادة تعيين السمات عند تغيير الفئة
                         categoryId: categories.findIndex(c => c.id === e.target.value).toString()
                       });
                     }}
@@ -853,17 +887,25 @@ export default function ProductsManagementPage() {
                 </div>
               </div>
 
-              {/* DYNAMIC ATTRIBUTES */}
+              {/* DYNAMIC ATTRIBUTES (MODIFIED FOR COLOR ICON) */}
               {formData.category && getCategoryAttributes().length > 0 && (
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h3 className="text-lg font-bold mb-4 text-blue-900">
-                    مواصفات {formData.category}
+                  <h3 className="text-lg font-bold mb-4 text-blue-900 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" /> مواصفات {categories.find(c => c.id === formData.category)?.name || formData.category}
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     {getCategoryAttributes().map((attr) => (
                       <div key={attr.name}>
-                        <label className="block font-bold mb-2 text-blue-900">
+                        <label className="block font-bold mb-2 text-blue-900 flex items-center gap-2">
                           {attr.label}
+                          {/* 🌟 الميزة الجديدة: عرض أيقونة اللون المختار 🌟 */}
+                          {attr.name === 'color' && formData.attributes['color'] && (
+                            <span 
+                              className="w-5 h-5 rounded-full border border-gray-400 shadow-sm"
+                              style={{ backgroundColor: getColorCode(formData.attributes['color']) }}
+                              title={formData.attributes['color']}
+                            ></span>
+                          )}
                         </label>
                         {attr.type === 'select' ? (
                           <select
@@ -909,12 +951,12 @@ export default function ProductsManagementPage() {
 
               {/* Featured & Enabled */}
               <div className="flex gap-4">
-                <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg flex-1 cursor-pointer">
+                <label className="flex items-center gap-3 p-4 bg-gray-100 rounded-lg flex-1 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.featured}
                     onChange={(e) => setFormData({...formData, featured: e.target.checked})}
-                    className="w-5 h-5"
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <div>
                     <p className="font-semibold">منتج مميز</p>
@@ -922,12 +964,12 @@ export default function ProductsManagementPage() {
                   </div>
                 </label>
 
-                <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg flex-1 cursor-pointer">
+                <label className="flex items-center gap-3 p-4 bg-gray-100 rounded-lg flex-1 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.enabled}
                     onChange={(e) => setFormData({...formData, enabled: e.target.checked})}
-                    className="w-5 h-5"
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <div>
                     <p className="font-semibold">نشط</p>
@@ -942,7 +984,7 @@ export default function ProductsManagementPage() {
               <button
                 onClick={handleSubmit}
                 disabled={loading || uploading || uploadedImages.length === 0}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition"
               >
                 <Save className="w-5 h-5" />
                 {loading ? 'جاري الحفظ...' : editingProduct ? 'تحديث المنتج' : 'إضافة المنتج'}
@@ -953,7 +995,7 @@ export default function ProductsManagementPage() {
                   setShowModal(false);
                   resetForm();
                 }}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300"
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition"
               >
                 إلغاء
               </button>
