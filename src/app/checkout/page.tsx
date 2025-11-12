@@ -84,7 +84,7 @@ const ALGERIA_WILAYAS_ORDERED = [
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cartItems, getCartTotal, clearCart, getCartCount } = useCart();
+  const { cartItems, getCartTotal, clearCart, getCartCount, createOrder } = useCart();
   const { getWishlistCount } = useWishlist();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -238,54 +238,44 @@ export default function CheckoutPage() {
     toast.success('تم إلغاء الكوبون');
   };
 
+  // ✅ دالة إنشاء الطلب - مصححة بالكامل
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     if (!formData.fullName || !formData.phone || !formData.wilaya || !formData.commune) {
-  toast.error('يرجى ملء جميع الحقول المطلوبة');
-  setLoading(false);
-  return;
-}
-
+      toast.error('يرجى ملء جميع الحقول المطلوبة');
+      setLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName: formData.fullName,
-          customerEmail: user?.email || formData.email || '',
-          customerPhone: formData.phone,
-          address: formData.address,
-          wilaya: formData.wilaya,
-          commune: formData.commune,
-          notes: formData.notes,
-          paymentMethod: formData.paymentMethod,
-          deliveryType: deliveryType,
-          subtotal: cartTotal,
-          shippingCost: shippingCost,
-          discount: discount,
-          total: total,
-          couponCode: appliedCoupon?.code || null,
-          items: cartItems.map(item => ({
-            productId: item.product.id,
-            productName: item.product.nameAr,
-            quantity: item.quantity,
-            price: item.product.salePrice || item.product.price,
-          })),
-        }),
+      // ✅ استخدام دالة createOrder من السياق بدلاً من fetch مباشرة
+      const result = await createOrder({
+        customerName: formData.fullName,
+        customerEmail: user?.email || formData.email || '',
+        customerPhone: formData.phone,
+        address: formData.address,
+        wilaya: formData.wilaya,
+        commune: formData.commune,
+        notes: formData.notes,
+        paymentMethod: formData.paymentMethod,
+        deliveryType: deliveryType,
+        subtotal: cartTotal,
+        shippingCost: shippingCost,
+        discount: discount,
+        total: total,
+        couponCode: appliedCoupon?.code || null,
+        items: cartItems.map(item => ({
+          product: item.product,
+          quantity: item.quantity,
+          color: item.color // ✅ إرسال اللون مع كل عنصر
+        })),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'فشل إنشاء الطلب');
-      }
 
       clearCart();
       toast.success('تم إرسال طلبك بنجاح! سنتصل بك قريباً ✅', { duration: 5000 });
-      router.push(`/orders?number=${data.order.orderNumber}`);
+      router.push(`/orders?number=${result.order.orderNumber}`);
     } catch (error: any) {
       console.error('❌ Order error:', error);
       toast.error(error.message || 'حدث خطأ، يرجى المحاولة مرة أخرى');
@@ -537,16 +527,15 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="md:col-span-2">
-<label className="block text-gray-700 mb-2 md:mb-3 font-bold text-sm md:text-lg">العنوان التفصيلي (اختياري)</label>
+                    <label className="block text-gray-700 mb-2 md:mb-3 font-bold text-sm md:text-lg">العنوان التفصيلي (اختياري)</label>
                     <textarea
-  name="address"
-  value={formData.address}
-  onChange={handleChange}
-  rows={3}
-  className="w-full px-3 md:px-5 py-2 md:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition text-sm md:text-lg"
-  placeholder="أدخل عنوانك بالتفصيل (اختياري)"
-/>
-
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      rows={3}
+                      className="w-full px-3 md:px-5 py-2 md:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition text-sm md:text-lg"
+                      placeholder="أدخل عنوانك بالتفصيل (اختياري)"
+                    />
                   </div>
 
                   <div className="md:col-span-2">
@@ -625,11 +614,18 @@ export default function CheckoutPage() {
                 </h2>
 
                 <div className="space-y-3 md:space-y-4 mb-4 md:mb-8 max-h-48 md:max-h-64 overflow-y-auto">
-                  {cartItems.map((item) => (
-                    <div key={item.product.id} className="flex justify-between text-gray-600 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl shadow-sm text-sm md:text-base">
-                      <span className="font-bold">
-                        {item.product.nameAr} × {item.quantity}
-                      </span>
+                  {cartItems.map((item, index) => (
+                    <div key={index} className="flex justify-between text-gray-600 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl shadow-sm text-sm md:text-base">
+                      <div>
+                        <span className="font-bold block">
+                          {item.product.nameAr} × {item.quantity}
+                        </span>
+                        {item.color && (
+                          <span className="text-xs text-gray-500">
+                            اللون: {item.color}
+                          </span>
+                        )}
+                      </div>
                       <span className="font-black">
                         {formatPrice((item.product.salePrice || item.product.price) * item.quantity)}
                       </span>
