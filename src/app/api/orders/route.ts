@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         shippingCost: parseFloat(body.shippingCost) || 0,
         discount: parseFloat(body.discount) || 0,
         total: parseFloat(body.total) || 0,
-        couponCode: body.couponCode || null,
+        // ❌ إزالة couponCode لأنه غير موجود في المودل
         items: {
           create: body.items.map((item: any) => ({
             productId: item.productId,
