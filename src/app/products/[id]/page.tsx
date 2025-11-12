@@ -43,7 +43,7 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<string>('');
   
-  const { addToCart, getCartCount } = useCart();
+  const { addToCart, getCartCount, getAvailableStock } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist, getWishlistCount } = useWishlist();
 
   useEffect(() => {
@@ -96,17 +96,32 @@ export default function ProductDetailPage() {
     return product.attributes.colors.filter((color: string) => getColorStock(color) > 0);
   };
 
+  // ✅ دالة إضافة للسلة - مصححة بالكامل
   const handleAddToCart = () => {
     if (!product) return;
     
     // إذا كان المنتج له ألوان ولم يتم اختيار لون
-    if (getAvailableColors().length > 0 && !selectedColor) {
+    const availableColors = getAvailableColors();
+    if (availableColors.length > 0 && !selectedColor) {
       toast.error('يرجى اختيار لون أولاً');
       return;
     }
+
+    // ✅ استخدام دالة getAvailableStock من السياق للتحقق من المخزون
+    const availableStock = getAvailableStock(product, selectedColor);
     
-    addToCart(product, quantity, selectedColor);
-    toast.success(`تمت إضافة ${quantity} من ${product.nameAr} ${selectedColor ? `(لون: ${selectedColor})` : ''} للسلة ✅`);
+    if (availableStock <= 0) {
+      toast.error('هذا المنتج غير متوفر حالياً');
+      return;
+    }
+
+    if (quantity > availableStock) {
+      toast.error(`الكمية المطلوبة غير متوفرة. المتوفر: ${availableStock} قطعة فقط`);
+      return;
+    }
+    
+    // ✅ إرسال اللون المختار مع المنتج
+    addToCart(product, quantity, undefined, selectedColor);
   };
 
   const handleWishlistToggle = () => {
@@ -173,6 +188,7 @@ export default function ProductDetailPage() {
 
   const productImage = getProductImage(product.images);
   const availableColors = getAvailableColors();
+  const currentStock = selectedColor ? getColorStock(selectedColor) : getTotalStock();
 
   return (
     <div className="min-h-screen bg-gray-50 font-arabic">
@@ -314,6 +330,11 @@ export default function ProductDetailPage() {
                 <div className="bg-white border-2 border-gray-200 rounded-xl p-6 mb-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     🎨 اختر اللون
+                    {selectedColor && (
+                      <span className="text-sm font-normal text-gray-600">
+                        (المحدد: {selectedColor})
+                      </span>
+                    )}
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {availableColors.map((color: string) => (
@@ -333,7 +354,10 @@ export default function ProductDetailPage() {
                         />
                         <div className="text-right">
                           <span className="font-semibold text-gray-700 block">{color}</span>
-                          <span className="text-sm text-gray-500">
+                          <span className={`text-sm ${
+                            getColorStock(color) > 10 ? 'text-green-600' : 
+                            getColorStock(color) > 0 ? 'text-orange-600' : 'text-red-600'
+                          }`}>
                             {getColorStock(color)} متوفر
                           </span>
                         </div>
@@ -396,13 +420,13 @@ export default function ProductDetailPage() {
                   <div className="flex items-center justify-between py-3">
                     <span className="text-gray-600">حالة التوفر</span>
                     <span className={`font-bold flex items-center gap-2 ${
-                      getTotalStock() > 10 ? 'text-green-600' : 
-                      getTotalStock() > 0 ? 'text-orange-600' : 'text-red-600'
+                      currentStock > 10 ? 'text-green-600' : 
+                      currentStock > 0 ? 'text-orange-600' : 'text-red-600'
                     }`}>
-                      {getTotalStock() > 10 ? (
-                        <>✅ متوفر ({getTotalStock()} قطعة)</>
-                      ) : getTotalStock() > 0 ? (
-                        <>⚠️ كمية محدودة ({getTotalStock()} قطعة فقط)</>
+                      {currentStock > 10 ? (
+                        <>✅ متوفر ({currentStock} قطعة)</>
+                      ) : currentStock > 0 ? (
+                        <>⚠️ كمية محدودة ({currentStock} قطعة فقط)</>
                       ) : (
                         <>❌ نفذت الكمية</>
                       )}
@@ -470,7 +494,7 @@ export default function ProductDetailPage() {
                     <Plus className="w-5 h-5" />
                   </button>
                   <span className="text-gray-600 mr-4">
-                    متوفر: {selectedColor ? getColorStock(selectedColor) : getTotalStock()} قطعة
+                    متوفر: {currentStock} قطعة
                   </span>
                 </div>
               </div>
@@ -479,11 +503,11 @@ export default function ProductDetailPage() {
               <div className="flex gap-3 mb-6">
                 <button
                   onClick={handleAddToCart}
-                  disabled={getTotalStock() === 0 || (selectedColor ? getColorStock(selectedColor) === 0 : false)}
+                  disabled={currentStock === 0}
                   className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="w-6 h-6" />
-                  {getTotalStock() > 0 ? 'أضف للسلة' : 'نفذت الكمية'}
+                  {currentStock > 0 ? 'أضف للسلة' : 'نفذت الكمية'}
                 </button>
                 <button
                   onClick={handleWishlistToggle}
