@@ -23,21 +23,51 @@ export default function HomePage() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [bestSellers, setBestSellers] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  const categories = [
-    { title: 'للتغذية', icon: '🍼', count: 15 },
-    { title: 'للرضاعة', icon: '👶', count: 10 },
-    { title: 'ملابس', icon: '👕', count: 25 },
-    { title: 'للخرجات', icon: '🎒', count: 12 },
-    { title: 'للنظافة', icon: '🛁', count: 18 },
-    { title: 'للنوم', icon: '🌙', count: 8 },
-  ];
-
   useEffect(() => {
     fetchFeaturedProducts();
+    fetchCategoriesCount();
   }, []);
+
+  const fetchCategoriesCount = async () => {
+    try {
+      const response = await fetch('/api/products?category=all');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+      
+      const products = await response.json();
+      
+      // حساب عدد المنتجات في كل فئة (المنتجات النشطة فقط)
+      const categoryCounts = [
+        { title: 'للتغذية', icon: '🍼', count: products.filter((p: any) => p.category === 'للتغذية' && p.enabled).length },
+        { title: 'للرضاعة', icon: '👶', count: products.filter((p: any) => p.category === 'للرضاعة' && p.enabled).length },
+        { title: 'ملابس', icon: '👕', count: products.filter((p: any) => p.category === 'ملابس' && p.enabled).length },
+        { title: 'للخرجات', icon: '🎒', count: products.filter((p: any) => p.category === 'للخرجات' && p.enabled).length },
+        { title: 'للنظافة', icon: '🛁', count: products.filter((p: any) => p.category === 'للنظافة' && p.enabled).length },
+        { title: 'للنوم', icon: '🌙', count: products.filter((p: any) => p.category === 'للنوم' && p.enabled).length },
+      ];
+      
+      setCategories(categoryCounts);
+      
+      console.log('✅ Category counts loaded:', categoryCounts);
+    } catch (error) {
+      console.error('❌ Error fetching categories:', error);
+      // استخدام الأرقام الافتراضية في حالة الخطأ
+      setCategories([
+        { title: 'للتغذية', icon: '🍼', count: 0 },
+        { title: 'للرضاعة', icon: '👶', count: 0 },
+        { title: 'ملابس', icon: '👕', count: 0 },
+        { title: 'للخرجات', icon: '🎒', count: 0 },
+        { title: 'للنظافة', icon: '🛁', count: 0 },
+        { title: 'للنوم', icon: '🌙', count: 0 },
+      ]);
+    }
+  };
 
   const fetchFeaturedProducts = async () => {
     setLoading(true);
@@ -67,6 +97,7 @@ export default function HomePage() {
     }
   };
 
+  // ... باقي الدوال تبقى كما هي
   const handleAddToCart = (product: any) => {
     addToCart(product, 1);
     setSelectedProduct(product);
