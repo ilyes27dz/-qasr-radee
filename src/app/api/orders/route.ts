@@ -34,15 +34,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // ✅ التحقق من توفر الكمية لكل منتج مع مراعاة الألوان
+    // ✅ التحقق من توفر الكمية لكل منتج مع مراعاة الألوان - محسّن
     for (const item of body.items) {
       const product = await prisma.product.findUnique({
-        where: { id: item.productId || item.id },
+        where: { id: item.productId },
       });
 
       if (!product) {
         return NextResponse.json(
-          { error: `المنتج ${item.productName || item.nameAr} غير موجود` },
+          { error: `المنتج ${item.productName} غير موجود` },
           { status: 400 }
         );
       }
@@ -95,14 +95,17 @@ export async function POST(request: Request) {
         notes: body.notes || '',
         status: 'pending',
         paymentMethod: body.paymentMethod || 'cash_on_delivery',
+        deliveryType: body.deliveryType || 'home',
         priority: 'medium',
         subtotal: parseFloat(body.subtotal) || 0,
         shippingCost: parseFloat(body.shippingCost) || 0,
+        discount: parseFloat(body.discount) || 0,
         total: parseFloat(body.total) || 0,
+        couponCode: body.couponCode || null,
         items: {
           create: body.items.map((item: any) => ({
-            productId: item.productId || item.id,
-            productName: item.productName || item.nameAr || item.name,
+            productId: item.productId,
+            productName: item.productName,
             quantity: parseInt(item.quantity) || 1,
             price: parseFloat(item.price) || 0,
             attributes: item.color ? { color: item.color } : null, // ✅ حفظ اللون مع الطلب
@@ -114,45 +117,58 @@ export async function POST(request: Request) {
       },
     });
 
-    // ✅ خصم الكمية من المخزون مع مراعاة الألوان
+    console.log('✅ تم حفظ الطلب في قاعدة البيانات:', order.orderNumber);
+
+    // ✅ خصم الكمية من المخزون مع مراعاة الألوان - محسّن
     for (const item of body.items) {
       const product = await prisma.product.findUnique({
-        where: { id: item.productId || item.id },
+        where: { id: item.productId },
       });
 
       if (product) {
         // تحويل attributes إلى النوع المحدد
         const attributes = product.attributes as ProductAttributes | null;
         
-        let updateData: any = {
-          stock: {
-            decrement: item.quantity,
-          },
-          sales: {
-            increment: item.quantity,
-          },
-        };
+        let updateData: any = {};
 
         // إذا كان هناك لون محدد، نخصم من مخزون هذا اللون
         if (item.color && attributes?.colorStock) {
           const currentColorStock = attributes.colorStock[item.color] || 0;
           const newColorStock = Math.max(0, currentColorStock - item.quantity);
           
-          updateData.attributes = {
-            ...attributes,
-            colorStock: {
-              ...attributes.colorStock,
-              [item.color]: newColorStock,
+          // تحديث colorStock والمخزون الإجمالي
+          updateData = {
+            attributes: {
+              ...attributes,
+              colorStock: {
+                ...attributes.colorStock,
+                [item.color]: newColorStock,
+              },
+            },
+            stock: {
+              decrement: item.quantity,
+            },
+            sales: {
+              increment: item.quantity,
             },
           };
 
           console.log(`✅ تم خصم ${item.quantity} من المنتج ${product.nameAr} (لون: ${item.color}) - المتبقي: ${newColorStock}`);
         } else {
+          // خصم من المخزون العام فقط
+          updateData = {
+            stock: {
+              decrement: item.quantity,
+            },
+            sales: {
+              increment: item.quantity,
+            },
+          };
           console.log(`✅ تم خصم ${item.quantity} من المنتج ${product.nameAr} - المتبقي: ${product.stock - item.quantity}`);
         }
 
         await prisma.product.update({
-          where: { id: item.productId || item.id },
+          where: { id: item.productId },
           data: updateData,
         });
       }
@@ -166,7 +182,7 @@ export async function POST(request: Request) {
       `/admin/orders/${order.id}`
     );
 
-    console.log('✅ تم حفظ الطلب بنجاح:', order.orderNumber);
+    console.log('✅ تم إنشاء الطلب بنجاح:', order.orderNumber);
 
     return NextResponse.json({ 
       success: true, 
